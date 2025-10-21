@@ -1,0 +1,12 @@
+<tool name="acts-root" version="44.0.1-7e91db8356c380fe96ded67a42751770" revision="1">
+  <lib name="ActsPluginRoot"/>
+  <use name="acts-core"/>
+  <use name="rootcling"/>
+  <use name="rootcore"/>
+  <use name="roothistmatrix"/>
+  <use name="rootimt"/>
+  <use name="rootmathcore"/>
+  <use name="rootrio"/>
+  <use name="rootthread"/>
+  <!-- MultiProc ? -->
+</tool>

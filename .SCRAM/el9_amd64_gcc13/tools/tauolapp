@@ -1,0 +1,36 @@
+{
+  "INCLUDE": [
+    "/cvmfs/cms.cern.ch/el9_amd64_gcc13/external/tauolapp/1.1.8-d2e9913e8984d18bd67ceae0503c47bb/include"
+  ],
+  "LIB": [
+    "TauolaCxxInterface",
+    "TauolaFortran",
+    "TauolaTauSpinner",
+    "TauolaHepMC",
+    "TauolaHEPEVT"
+  ],
+  "LIBDIR": [
+    "/cvmfs/cms.cern.ch/el9_amd64_gcc13/external/tauolapp/1.1.8-d2e9913e8984d18bd67ceae0503c47bb/lib"
+  ],
+  "RUNTIME": {
+    "PATH:ROOT_INCLUDE_PATH": [
+      "/cvmfs/cms.cern.ch/el9_amd64_gcc13/external/tauolapp/1.1.8-d2e9913e8984d18bd67ceae0503c47bb/include"
+    ]
+  },
+  "TAUOLAPP_BASE": "/cvmfs/cms.cern.ch/el9_amd64_gcc13/external/tauolapp/1.1.8-d2e9913e8984d18bd67ceae0503c47bb",
+  "TOOLNAME": "tauolapp",
+  "TOOLREVISION": "2",
+  "TOOLVERSION": "1.1.8-d2e9913e8984d18bd67ceae0503c47bb",
+  "USE": [
+    "root_cxxdefaults",
+    "hepmc",
+    "f77compiler",
+    "pythia8",
+    "lhapdf"
+  ],
+  "VARIABLES": [
+    "TAUOLAPP_BASE",
+    "LIBDIR",
+    "INCLUDE"
+  ]
+}

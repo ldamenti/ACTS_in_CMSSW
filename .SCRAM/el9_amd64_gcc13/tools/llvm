@@ -1,0 +1,39 @@
+{
+  "FLAGS": {
+    "CXXFLAGS": [
+      "-D_DEBUG",
+      "-D_GNU_SOURCE",
+      "-D__STDC_CONSTANT_MACROS",
+      "-D__STDC_FORMAT_MACROS",
+      "-D__STDC_LIMIT_MACROS",
+      "-O3",
+      "-fomit-frame-pointer",
+      "-fPIC",
+      "-Wno-enum-compare",
+      "-Wno-strict-aliasing",
+      "-fno-rtti"
+    ],
+    "LDFLAGS": [
+      "-Wl,-undefined",
+      "-Wl,suppress"
+    ]
+  },
+  "INCLUDE": [
+    "/cvmfs/cms.cern.ch/el9_amd64_gcc13/external/llvm/18.1.6-a2aa3f57cb0dea1ff978d71ced84357d/include"
+  ],
+  "LIB": [
+    "clang"
+  ],
+  "LIBDIR": [
+    "/cvmfs/cms.cern.ch/el9_amd64_gcc13/external/llvm/18.1.6-a2aa3f57cb0dea1ff978d71ced84357d/lib64"
+  ],
+  "LLVM_BASE": "/cvmfs/cms.cern.ch/el9_amd64_gcc13/external/llvm/18.1.6-a2aa3f57cb0dea1ff978d71ced84357d",
+  "TOOLNAME": "llvm",
+  "TOOLREVISION": "2",
+  "TOOLVERSION": "18.1.6-a2aa3f57cb0dea1ff978d71ced84357d",
+  "VARIABLES": [
+    "LLVM_BASE",
+    "LIBDIR",
+    "INCLUDE"
+  ]
+}

@@ -1,0 +1,12 @@
+<tool name="acts-core" version="44.0.1-7e91db8356c380fe96ded67a42751770" revision="1">
+  <info url="https://acts.readthedocs.io/en/v44.0.1-7e91db8356c380fe96ded67a42751770/"/>
+  <flags CXXFLAGS="-Wno-missing-braces"/>
+  <lib name="ActsCore"/>
+  <use name="boost_header"/>
+  <use name="eigen"/>
+  <client>
+    <environment name="ACTS_BASE" default="/eos/user/l/ldamenti/CMSSW_16_0_0_pre1/build/build/el9_amd64_gcc13/external/acts/44.0.1-7e91db8356c380fe96ded67a42751770"/>
+    <environment name="LIBDIR" default="$ACTS_BASE/lib64"/>
+    <environment name="INCLUDE" default="$ACTS_BASE/include"/>
+  </client>
+</tool>

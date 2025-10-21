@@ -1,0 +1,21 @@
+<tool name="acts-dd4hep" version="44.0.1-7e91db8356c380fe96ded67a42751770" revision="1">
+  <lib name="ActsPluginDD4hep"/>
+  <use name="acts-core"/>
+  <use name="acts-root"/>
+  <use name="dd4hep-core"/>
+  <use name="rootcling"/>
+  <use name="rootcore"/>
+  <use name="rootgeom"/>
+  <use name="roothistmatrix"/>
+  <use name="rootimt"/>
+  <use name="rootmath"/>
+  <use name="rootphysics"/>
+  <use name="rootrint"/>
+  <use name="rootrio"/>
+  <use name="rootthread"/>
+  <use name="xerces-c"/>
+  <!-- DDRec ? -->
+  <!-- MultiProc ? -->
+  <!-- If this is really needed, move it to xerces-c/xerces-c.xml -->
+  <runtime name="LC_ALL" value="C"/>
+</tool>

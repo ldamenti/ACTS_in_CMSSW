@@ -1,0 +1,29 @@
+{
+  "LIB": [
+    "ActsPluginDD4hep"
+  ],
+  "RUNTIME": {
+    "LC_ALL": [
+      "C"
+    ]
+  },
+  "TOOLNAME": "acts-dd4hep",
+  "TOOLREVISION": "1",
+  "TOOLVERSION": "44.0.1-7e91db8356c380fe96ded67a42751770",
+  "USE": [
+    "acts-core",
+    "acts-root",
+    "dd4hep-core",
+    "rootcling",
+    "rootcore",
+    "rootgeom",
+    "roothistmatrix",
+    "rootimt",
+    "rootmath",
+    "rootphysics",
+    "rootrint",
+    "rootrio",
+    "rootthread",
+    "xerces-c"
+  ]
+}

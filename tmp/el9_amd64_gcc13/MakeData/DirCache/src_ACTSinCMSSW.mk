@@ -1,0 +1,3 @@
+ALL_SUBSYSTEMS+=ACTSinCMSSW
+subdirs_src_ACTSinCMSSW = src_ACTSinCMSSW_GeometryBuilder src_ACTSinCMSSW_GeometryDataFormat
+subdirs_src += src_ACTSinCMSSW

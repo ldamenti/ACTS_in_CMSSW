@@ -1,0 +1,29 @@
+{
+  "FLAGS": {
+    "FORCE_LINK": [
+      "1"
+    ]
+  },
+  "INCLUDE": [
+    "/cvmfs/cms.cern.ch/el9_amd64_gcc13/external/pytorch-scatter/2.1.2-65748b3e19d30dd7b798899a016b285b/include",
+    "/cvmfs/cms.cern.ch/el9_amd64_gcc13/external/pytorch-scatter/2.1.2-65748b3e19d30dd7b798899a016b285b/include/torchscatter/"
+  ],
+  "LIB": [
+    "torchscatter"
+  ],
+  "LIBDIR": [
+    "/cvmfs/cms.cern.ch/el9_amd64_gcc13/external/pytorch-scatter/2.1.2-65748b3e19d30dd7b798899a016b285b/lib"
+  ],
+  "PYTORCH_SCATTER_BASE": "/cvmfs/cms.cern.ch/el9_amd64_gcc13/external/pytorch-scatter/2.1.2-65748b3e19d30dd7b798899a016b285b",
+  "TOOLNAME": "pytorch-scatter",
+  "TOOLREVISION": "3",
+  "TOOLVERSION": "2.1.2-65748b3e19d30dd7b798899a016b285b",
+  "USE": [
+    "pytorch"
+  ],
+  "VARIABLES": [
+    "PYTORCH_SCATTER_BASE",
+    "INCLUDE",
+    "LIBDIR"
+  ]
+}

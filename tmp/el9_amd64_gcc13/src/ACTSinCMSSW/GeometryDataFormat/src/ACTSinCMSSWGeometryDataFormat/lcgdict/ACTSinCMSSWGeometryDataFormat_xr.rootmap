@@ -1,0 +1,14 @@
+{ decls }
+namespace std {  }
+namespace Acts {  }
+namespace edm {  }
+namespace edm { template <typename T> class Wrapper; }
+
+[ libACTSinCMSSWGeometryDataFormat.so ]
+# List of selected classes
+class Acts::CMSDetectorElement
+class edm::Wrapper<std::vector<Acts::CMSDetectorElement> >
+class edm::Wrapper<vector<Acts::CMSDetectorElement> >
+class vector<Acts::CMSDetectorElement*>
+class vector<Acts::CMSDetectorElement>
+header ACTSinCMSSW/GeometryDataFormat/interface/CMSDetectorElement.h

@@ -1,0 +1,29 @@
+{
+  "ACTS_BASE": "/eos/user/l/ldamenti/CMSSW_16_0_0_pre1/build/build/el9_amd64_gcc13/external/acts/44.0.1-7e91db8356c380fe96ded67a42751770",
+  "FLAGS": {
+    "CXXFLAGS": [
+      "-Wno-missing-braces"
+    ]
+  },
+  "INCLUDE": [
+    "/eos/user/l/ldamenti/CMSSW_16_0_0_pre1/build/build/el9_amd64_gcc13/external/acts/44.0.1-7e91db8356c380fe96ded67a42751770/include"
+  ],
+  "LIB": [
+    "ActsCore"
+  ],
+  "LIBDIR": [
+    "/eos/user/l/ldamenti/CMSSW_16_0_0_pre1/build/build/el9_amd64_gcc13/external/acts/44.0.1-7e91db8356c380fe96ded67a42751770/lib64"
+  ],
+  "TOOLNAME": "acts-core",
+  "TOOLREVISION": "1",
+  "TOOLVERSION": "44.0.1-7e91db8356c380fe96ded67a42751770",
+  "USE": [
+    "boost_header",
+    "eigen"
+  ],
+  "VARIABLES": [
+    "ACTS_BASE",
+    "LIBDIR",
+    "INCLUDE"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "EXPORT": {
+    "LIB": [
+      "1"
+    ]
+  },
+  "NAME": "ACTSinCMSSWGeometryDataFormat",
+  "USE": [
+    "Geometry/TrackerGeometryBuilder",
+    "Geometry/CommonDetUnit",
+    "Geometry/Records",
+    "DataFormats/TrackerCommon",
+    "DataFormats/TrackerRecHit2D",
+    "DataFormats/SiStripDetId",
+    "DataFormats/GeometrySurface",
+    "FWCore/Framework",
+    "FWCore/ParameterSet",
+    "FWCore/MessageLogger",
+    "CondFormats/SiStripObjects",
+    "DetectorDescription/Core",
+    "root",
+    "acts-core",
+    "acts-json",
+    "acts-svg",
+    "rootcore",
+    "FWCore/Utilities"
+  ]
+}

@@ -1,0 +1,5 @@
+<tool name="acts-json" version="44.0.1-7e91db8356c380fe96ded67a42751770" revision="1">
+  <lib name="ActsPluginJson"/>
+  <use name="acts-core"/>
+  <use name="json"/>
+</tool>

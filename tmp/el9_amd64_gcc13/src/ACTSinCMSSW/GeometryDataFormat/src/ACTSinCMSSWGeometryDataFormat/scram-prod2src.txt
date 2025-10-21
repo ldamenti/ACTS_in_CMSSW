@@ -1,0 +1,1 @@
+ACTSinCMSSWGeometryDataFormat ACTSinCMSSW/GeometryDataFormat/src/CMSDetectorElement.cc ACTSinCMSSW/GeometryDataFormat/src/CMSMagneticFieldProvider.cpp ACTSinCMSSW/GeometryDataFormat/src/JsonMaterialWriter.cpp ACTSinCMSSW/GeometryDataFormat/src/RootPropagationStepsWriter.cpp ACTSinCMSSW/GeometryDataFormat/src/classes.h ACTSinCMSSW/GeometryDataFormat/src/classes_def.xml

@@ -1,0 +1,18 @@
+{
+  "LIB": [
+    "ActsPluginGeant4"
+  ],
+  "TOOLNAME": "acts-geant4",
+  "TOOLREVISION": "1",
+  "TOOLVERSION": "44.0.1-7e91db8356c380fe96ded67a42751770",
+  "USE": [
+    "acts-core",
+    "acts-root",
+    "clhep",
+    "expat",
+    "geant4core",
+    "geant4vis",
+    "xerces-c",
+    "zlib"
+  ]
+}

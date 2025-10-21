@@ -1,0 +1,11 @@
+{
+  "LIB": [
+    "boost_regex"
+  ],
+  "TOOLNAME": "boost_regex",
+  "TOOLREVISION": "1",
+  "TOOLVERSION": "1.80.0-f5051ff020fe9f6f1a74162002ac1ea0",
+  "USE": [
+    "boost"
+  ]
+}

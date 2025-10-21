@@ -1,0 +1,13 @@
+{
+  "LIB": [
+    "ActsPluginActSVG",
+    "actsvg_core",
+    "actsvg_meta"
+  ],
+  "TOOLNAME": "acts-svg",
+  "TOOLREVISION": "1",
+  "TOOLVERSION": "44.0.1-7e91db8356c380fe96ded67a42751770",
+  "USE": [
+    "acts-core"
+  ]
+}

@@ -1,0 +1,10 @@
+pluginGeometryBuilder.so ACTSPropagatorTest CMS%EDM%Framework%Module
+pluginGeometryBuilder.so ACTSPropagatorTest CMS%EDM%Framework%ParameterSet%Description
+pluginGeometryBuilder.so ACTSTrackingGeometryProducer CMS%EDM%Framework%ESModule
+pluginGeometryBuilder.so ACTSTrackingGeometryProducer CMS%EDM%Framework%ParameterSet%Description
+pluginGeometryBuilder.so JsonMaterialMapsProducer CMS%EDM%Framework%Module
+pluginGeometryBuilder.so JsonMaterialMapsProducer CMS%EDM%Framework%ParameterSet%Description
+pluginGeometryBuilder.so MappedMaterialValidator CMS%EDM%Framework%Module
+pluginGeometryBuilder.so MappedMaterialValidator CMS%EDM%Framework%ParameterSet%Description
+pluginGeometryBuilder.so TrackerGeometryDumper_Phase2 CMS%EDM%Framework%Module
+pluginGeometryBuilder.so TrackerGeometryDumper_Phase2 CMS%EDM%Framework%ParameterSet%Description

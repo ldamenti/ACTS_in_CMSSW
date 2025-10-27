@@ -16,6 +16,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/ESGetToken.h"
 #include "FWCore/Framework/interface/ModuleFactory.h"
+#include "FWCore/Utilities/interface/typelookup.h"
 
 #include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
 #include "Geometry/Records/interface/ACTSTrackerGeometryRecord.h"
@@ -97,6 +98,11 @@ const std::array<Acts::AxisDirection, 2UL> casts{Acts::AxisDirection::AxisZ, Act
 
 using DetElVect = std::vector<std::shared_ptr<Acts::CMSDetectorElement>>;
 
+struct TrackingGeometryWithDetEls {
+    DetElVect detElements;
+    std::shared_ptr<Acts::TrackingGeometry> trackingGeometry;
+};
+TYPELOOKUP_DATA_REG(TrackingGeometryWithDetEls);
 
 // ############################## MATERIAL METHODS ##############################
 
@@ -650,11 +656,13 @@ class MyMaterialTrackWriter {
 };
 // ##########################################################################################
 
+
 class ACTSTrackingGeometryProducer : public edm::ESProducer {
 public:
   explicit ACTSTrackingGeometryProducer(const edm::ParameterSet& ps);
   ~ACTSTrackingGeometryProducer() override = default;
-  std::unique_ptr<Acts::TrackingGeometry> produce(const ACTSTrackerGeometryRecord& iRecord);
+  //std::unique_ptr<Acts::TrackingGeometry> produce(const ACTSTrackerGeometryRecord& iRecord);  // shared to the vector of detector element
+  std::shared_ptr<TrackingGeometryWithDetEls> produce(const ACTSTrackerGeometryRecord& iRecord);
 
 private:
   edm::ESGetToken<TrackerGeometry, TrackerDigiGeometryRecord> trackerGeomToken_;
@@ -680,7 +688,8 @@ ACTSTrackingGeometryProducer::ACTSTrackingGeometryProducer(const edm::ParameterS
 
   }
 
-std::unique_ptr<Acts::TrackingGeometry> ACTSTrackingGeometryProducer::produce(const ACTSTrackerGeometryRecord& iRecord) { 
+//std::unique_ptr<Acts::TrackingGeometry> ACTSTrackingGeometryProducer::produce(const ACTSTrackerGeometryRecord& iRecord) { 
+std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produce(const ACTSTrackerGeometryRecord& iRecord) { 
 
   const TrackerGeometry& trackerGeom = iRecord.get(trackerGeomToken_);
 
@@ -1108,7 +1117,7 @@ std::unique_ptr<Acts::TrackingGeometry> ACTSTrackingGeometryProducer::produce(co
   Acts::GeometryContext gctx;
   auto logger = Acts::getDefaultLogger("UnitTests", Acts::Logging::INFO);
   Acts::Experimental::BlueprintOptions BluePrint_otp;
-  std::unique_ptr<Acts::TrackingGeometry> trackingGeometry = root->construct(BluePrint_otp, gctx, *logger);
+  std::shared_ptr<Acts::TrackingGeometry> trackingGeometry = std::move(root->construct(BluePrint_otp, gctx, *logger));
 
   // ===== OPTIONAL: Save the surfaces associate to the detector elements in an SVG file =====
   if(saveSvgfile_) {
@@ -1136,8 +1145,11 @@ std::unique_ptr<Acts::TrackingGeometry> ACTSTrackingGeometryProducer::produce(co
     }
   }
 
-
-  return trackingGeometry;
+  auto result = std::make_shared<TrackingGeometryWithDetEls>();
+    result->detElements = DetEl_vector;
+    result->trackingGeometry = trackingGeometry;
+  
+  return result;
 }
 
 DEFINE_FWK_EVENTSETUP_MODULE(ACTSTrackingGeometryProducer);

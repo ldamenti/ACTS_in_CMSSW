@@ -1,0 +1,20 @@
+
+# in: /afs/cern.ch/user/l/ldamenti/CMSSW_16_0_0_pre1/src/ACTSinCMSSW/GeometryBuilder/python going to execute cd 12408.0_SingleMuPt100+2023
+ cmsDriver.py SingleMuPt100_Eta2p85_cfi  -s GEN,SIM -n 100 --conditions auto:phase1_2023_realistic --beamspot DBrealistic --datatier GEN-SIM --eventcontent FEVTDEBUG --geometry DB:Extended --era Run3_2023 --relval 9000,100 --no_exec --fileout file:step1.root  > step1_SingleMuPt100+2023.log  2>&1
+ 
+
+# in: /afs/cern.ch/user/l/ldamenti/CMSSW_16_0_0_pre1/src/ACTSinCMSSW/GeometryBuilder/python going to execute cd 12408.0_SingleMuPt100+2023
+ cmsDriver.py step2  -s DIGI:pdigi_valid,L1,DIGI2RAW,HLT:@relval2023 --conditions auto:phase1_2023_realistic --datatier GEN-SIM-DIGI-RAW -n 100 --eventcontent FEVTDEBUGHLT --geometry DB:Extended --era Run3_2023 --no_exec --filein  file:step1.root  --fileout file:step2.root  > step2_SingleMuPt100+2023.log  2>&1
+ 
+
+# in: /afs/cern.ch/user/l/ldamenti/CMSSW_16_0_0_pre1/src/ACTSinCMSSW/GeometryBuilder/python going to execute cd 12408.0_SingleMuPt100+2023
+ cmsDriver.py step3  -s RAW2DIGI,L1Reco,RECO,RECOSIM,PAT,NANO,VALIDATION:@standardValidationNoHLT+@miniAODValidation,DQM:@standardDQMFakeHLT+@miniAODDQM+@nanoAODDQM --conditions auto:phase1_2023_realistic --datatier GEN-SIM-RECO,MINIAODSIM,NANOAODSIM,DQMIO -n 100 --eventcontent RECOSIM,MINIAODSIM,NANOEDMAODSIM,DQM --geometry DB:Extended --era Run3_2023 --no_exec --filein  file:step2.root  --fileout file:step3.root  > step3_SingleMuPt100+2023.log  2>&1
+ 
+
+# in: /afs/cern.ch/user/l/ldamenti/CMSSW_16_0_0_pre1/src/ACTSinCMSSW/GeometryBuilder/python going to execute cd 12408.0_SingleMuPt100+2023
+ cmsDriver.py step4  -s HARVESTING:@standardValidationNoHLT+@standardDQMFakeHLT+@miniAODValidation+@miniAODDQM+@nanoAODDQM --conditions auto:phase1_2023_realistic --mc  --geometry DB:Extended --scenario pp --filetype DQM --era Run3_2023 -n 100  --no_exec --filein file:step3_inDQM.root --fileout file:step4.root  > step4_SingleMuPt100+2023.log  2>&1
+ 
+
+# in: /afs/cern.ch/user/l/ldamenti/CMSSW_16_0_0_pre1/src/ACTSinCMSSW/GeometryBuilder/python going to execute cd 12408.0_SingleMuPt100+2023
+ cmsDriver.py step5  -s ALCA:SiPixelCalSingleMuonLoose+SiPixelCalSingleMuonTight+TkAlMuonIsolated+TkAlMinBias+MuAlOverlaps+EcalESAlign+TkAlZMuMu+TkAlDiMuonAndVertex+HcalCalHBHEMuonProducerFilter+TkAlUpsilonMuMu+TkAlJpsiMuMu+SiStripCalMinBias --conditions auto:phase1_2023_realistic --datatier ALCARECO -n 100 --eventcontent ALCARECO --geometry DB:Extended --era Run3_2023 --no_exec --filein file:step3.root --fileout file:step5.root  > step5_SingleMuPt100+2023.log  2>&1
+ 

@@ -88,6 +88,9 @@
 #include "Acts/Material/MaterialMapper.hpp"
 
 #include "Acts/Propagator/EigenStepper.hpp"
+#include "Acts/MagneticField/NullBField.hpp"
+
+
 
 #include <fstream>
 #include <iomanip>
@@ -105,6 +108,12 @@ using PropagationOutput = std::pair<PropagationSummary, Acts::RecordedMaterial>;
 using PropagationSummaries = std::vector<PropagationSummary>; 
 using RandomEngine = std::mt19937;
 using RandomSeed = uint32_t;
+using DetElVect = std::vector<std::shared_ptr<Acts::CMSDetectorElement>>;
+
+struct TrackingGeometryWithDetEls {
+    DetElVect detElements;
+    std::shared_ptr<Acts::TrackingGeometry> trackingGeometry;
+};
 
 struct myContext{
   /// Magnetic and Geometry contrext
@@ -266,19 +275,22 @@ public:
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
 private:
-  edm::ESGetToken<Acts::TrackingGeometry, ACTSTrackerGeometryRecord> trackerGeomToken_;
+  edm::ESGetToken<TrackingGeometryWithDetEls, ACTSTrackerGeometryRecord> trkGeomInfoToken_;
   edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> magFieldToken_;
 
 };
 
 ACTSPropagatorTest::ACTSPropagatorTest(const edm::ParameterSet& ps)
-    : trackerGeomToken_(esConsumes<Acts::TrackingGeometry, ACTSTrackerGeometryRecord>()),
+    : trkGeomInfoToken_(esConsumes<TrackingGeometryWithDetEls, ACTSTrackerGeometryRecord>()),
       magFieldToken_(esConsumes<MagneticField, IdealMagneticFieldRecord>()) {}
 
 void ACTSPropagatorTest::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) { 
 
   const MagneticField& magField = iSetup.getData(magFieldToken_);
-  const auto& trackingGeometry = iSetup.getData(trackerGeomToken_);
+  const auto& trkGeo_and_DetEls = iSetup.getData(trkGeomInfoToken_);
+
+  DetElVect detEls = trkGeo_and_DetEls.detElements;
+  std::shared_ptr<Acts::TrackingGeometry> trackingGeometry = trkGeo_and_DetEls.trackingGeometry;
 
   myContext myCtx;
   myCtx.geoContext = Acts::GeometryContext{};
@@ -287,21 +299,22 @@ void ACTSPropagatorTest::produce(edm::Event& iEvent, const edm::EventSetup& iSet
 
   // ===== Definition of EigenStepper =====
   auto magFieldPtr = std::make_shared<const CMSMagneticFieldProvider>(magField);
-  Acts::EigenStepper<> es(magFieldPtr);
+  auto BField_0T = std::make_shared<Acts::NullBField>(); // nullBfield
+  Acts::EigenStepper<> es(BField_0T);
 
   // *** NAVIGATOR ***
   Acts::Navigator::Config navi_cfg;
-  navi_cfg.trackingGeometry = std::make_shared<Acts::TrackingGeometry>(*trackingGeometry);
-  std::shared_ptr<const Acts::Logger> navi_logger = Acts::getDefaultLogger("Navigator", Acts::Logging::Level::VERBOSE);
+  navi_cfg.trackingGeometry = trackingGeometry;
+  std::shared_ptr<const Acts::Logger> navi_logger = Acts::getDefaultLogger("Navigator", Acts::Logging::Level::INFO);
   Acts::Navigator navi(navi_cfg, std::move(navi_logger));
-  std::shared_ptr<const Acts::Logger> prop_logger = Acts::getDefaultLogger("Propagator", Acts::Logging::Level::VERBOSE);
+  std::shared_ptr<const Acts::Logger> prop_logger = Acts::getDefaultLogger("Propagator", Acts::Logging::Level::INFO);
   // *** PROPAGATOR ***
   Acts::Propagator prop(es, navi, std::move(prop_logger));
 
   // Instantiate my concrete propagator:
   MyConcretePropagator my_prop(prop);
   PropagationAlgorithm_Config PropAlg_cfg;
-  std::shared_ptr<const Acts::Logger> Myprop_logger = Acts::getDefaultLogger("Concrete Propagator", Acts::Logging::Level::VERBOSE);
+  std::shared_ptr<const Acts::Logger> Myprop_logger = Acts::getDefaultLogger("Concrete Propagator", Acts::Logging::Level::INFO);
 
   Ranges rngs;
   rngs.phiRange = std::make_pair(-std::numbers::pi, std::numbers::pi);
@@ -321,27 +334,31 @@ void ACTSPropagatorTest::produce(edm::Event& iEvent, const edm::EventSetup& iSet
   for(const auto& this_particle : Tracks_par){
     std::cout << "\rParticle: " << P_count + 1 << " out of " << N_particle << std::flush;
     auto result = my_prop.execute(myCtx, PropAlg_cfg, *Myprop_logger, this_particle);
+
     PropagationSummary This_PropSum = result.value().first;
+
     Acts::RecordedMaterial This_RecMat = result.value().second;
 
+
     Acts::RecordedMaterialTrack This_RecMatTrack; 
+
     This_RecMatTrack.first.first = Acts::Vector3::Zero(); // The starting position is 0 for all the particles
     This_RecMatTrack.first.second = this_particle.absoluteMomentum()*this_particle.direction();
     This_RecMatTrack.second = This_RecMat;
 
+
     PropSum_vec.push_back(This_PropSum);
     RecMat_vec[P_count] = This_RecMatTrack;
     P_count+=1;
+
   }
 
   // Verify the propagarion:
   RootPropagationStepsWriter::Config PropStepWrite_cfg;
-  PropStepWrite_cfg.filePath = "Propagator_test.root";
+  PropStepWrite_cfg.filePath = "Propagator_test_noB.root";
   RootPropagationStepsWriter PropStepWrite(PropStepWrite_cfg);
   PropStepWrite.writeT(1, PropSum_vec);
   PropStepWrite.finalize();
-
-
 
 }
 

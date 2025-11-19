@@ -9,6 +9,8 @@ from Configuration.Eras.Era_Run3_2023_cff import Run3_2023
 
 process = cms.Process('HARVESTING',Run3_2023)
 
+folder = 'ACTS_files/'
+
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
@@ -22,13 +24,13 @@ process.load('Configuration.StandardSequences.Harvesting_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(100),
+    input = cms.untracked.int32(-1),
     output = cms.optional.untracked.allowed(cms.int32,cms.PSet)
 )
 
 # Input source
 process.source = cms.Source("DQMRootSource",
-    fileNames = cms.untracked.vstring('file:step3_inDQM.root')
+    fileNames = cms.untracked.vstring(f'file:{folder}step3_inDQM.root')
 )
 
 process.options = cms.untracked.PSet(

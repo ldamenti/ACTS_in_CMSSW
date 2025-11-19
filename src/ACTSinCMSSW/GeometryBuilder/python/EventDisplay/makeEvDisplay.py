@@ -94,61 +94,167 @@ def plotCMS(zr):
 def getLastEntry(List):
     tot_len = len(List)
     return List[tot_len - 1] + 100
+
+def getBeforeHits(filename, track_index): 
+    X = []
+    Y = []
+    Z = []
+    R = []
     
-            
+    with open(filename) as file:
+        context = file.read()
+        
+    tracks = context.split('-----')
+    
+    for i, track in enumerate(tracks):
+        if i == track_index:
+            lines = track.splitlines()
+    
+    for line in lines:
+        if line == "": continue
+        if 'CMSSW' in filename:
+            detId = line.strip().split(';')[0]
+            subDet = line.strip().split(';')[1]
+            position = line.strip().split(';')[2].split('(')[1].split(')')[0]
+            X.append(float(position.split(',')[0])*10)
+            Y.append(float(position.split(',')[1])*10)
+            Z.append(float(position.split(',')[2])*10)
+            R.append(math.sqrt((float(position.split(',')[0])*10)**2 + (float(position.split(',')[1])*10)**2))
+        else: 
+            detId = line.strip().split(';')[1] 
+            subDet = line.strip().split(';')[2]
+            position = line.strip().split(';')[3]
+            X.append(float(position.split()[0]))
+            Y.append(float(position.split()[1]))
+            Z.append(float(position.split()[2]))
+            R.append(math.sqrt(float(position.split()[0])**2 + float(position.split()[1])**2))
+    
+    return X, Y, Z, R
+      
+def plotBefore_reFit_hits(isRZ = True, track_index = 0):
+    # ACTS
+    X_acts, Y_acts, Z_acts, R_acts = getBeforeHits('../12408.0_SingleMuPt100+2023/DetEl_ACTSInfo_AfterConversion.txt', track_index)
+    # CMSSW
+    X_cmssw, Y_cmssw, Z_cmssw, R_cmssw = getBeforeHits('../12408.0_SingleMuPt100+2023/DetEl_CMSSWInfo.txt', track_index)
+    
+    if(isRZ):
+        if X_acts != []: plt.scatter(Z_acts, R_acts, color = 'yellow', s = 0.3, marker='x', label = 'sensitive before reFit (ACTS)')
+        if X_cmssw != []: plt.scatter(Z_cmssw, R_cmssw, color = 'orange', s = 0.3, marker='x', label = 'sensitive before reFit (CMSSW)')
+    else:
+        if X_acts != []: plt.scatter(X_acts, Y_acts, color = 'yellow', s = 0.3, marker='x', label = 'sensitive before reFit (ACTS)')
+        if X_cmssw != []: plt.scatter(X_cmssw, Y_cmssw, color = 'orange', s = 0.3, marker='x', label = 'sensitive before reFit (CMSSW)')
+
+
+def runDetIDAnalysis(lines):
+    X = []
+    Y = []
+    Z = []
+    R = []
+    
+    with open('../12408.0_SingleMuPt100+2023/DetEl_Info.txt', 'r') as file:
+        content = file.read()
+    
+    surfInfo_list = []
+    for line in lines:
+        if 'Update single surface status for surface:' in line: 
+            surfInfo = line.strip().split()[9]
+            if surfInfo not in surfInfo_list:
+                surfInfo_list.append(surfInfo)
+    
+    isFound = False
+    sensCounter = 0
+    for this_surf in surfInfo_list:
+        if 'sen' in this_surf:
+            print("Sensitive surface found:")
+            # Search for this sens surface in the info file:
+            for line in content.splitlines():
+                if this_surf in line:
+                    detId = line.strip().split(';')[1]
+                    subDet = line.strip().split(';')[2]
+                    position = line.strip().split(';')[3]
+                    X.append(float(position.split()[0]))
+                    Y.append(float(position.split()[1]))
+                    Z.append(float(position.split()[2]))
+                    R.append(math.sqrt(float(position.split()[0])**2 + float(position.split()[1])**2))
+                    print(">>>>> Surface info: ", detId, " ", subDet, " ", position)
+                    isFound = True
+                    sensCounter += 1
+                    break
+                
+            if(not isFound):
+                print("ERROR: Surface NOT found in info file!")
+                
+    print(f"\nSummary: found {sensCounter} sensitive surfaces")
+    return X, Y, Z, R 
+    
 if __name__ == '__main__':
-    filename = '10NegMuons.txt'
+    filename = 'sixFitsForDetID_Study.txt'
     withDirection = False
     withHits = True 
+    withIDAnalysis = True
     
     with open(filename, 'r') as file:
         content = file.read()
         
-    tracks = content.split('=============================================================================')
+    tracks = content.split('################################################################################################')
 
-    #this_track = 1
+    # this_track = 4
+    #this_tracks = [0, 2, 3] #BAD
+    this_tracks = [4, 5] #GOOD
 
     plt.figure()
     plotCMS(zr = True)
-    for i, track in enumerate(tracks):
+    for i, track in enumerate(tracks[:-1]):
         isOk = False
-        #if i != this_track: continue  # USE THIS TO SELECT A GIVEN TRACK
+        limitsOk = False
+        if i not in this_tracks: continue  # USE THIS TO SELECT A GIVEN TRACK(s)
         if len(track) < 50: break
         lines = track.splitlines()
         if '>>>> Fitted parameters:' in lines: isOk = True
         
+        if '>>>>> INNER AND OUTER DETID IDENTIFIED' in lines: limitsOk = True
+        
         X_lis, Y_list, Z_list, R_list  = getPos_list(lines)
         x_dir, y_dir, z_dir, r_dir = getInitDir(lines)
         x_hit, y_hit, z_hit, r_hit = getPixelsHits(lines)
-        #if isOk:  print("OK: ", X_lis[len(X_lis) - 1], Y_list[len(Y_list) - 1], Z_list[len(Z_list) - 1], R_list[len(R_list) - 1])
-        #else:  print("Not OK: ", X_lis[len(X_lis) - 1], Y_list[len(Y_list) - 1], Z_list[len(Z_list) - 1], R_list[len(R_list) - 1])
-
+        
         if isOk: 
-            plt.scatter(Z_list, R_list, color = 'green', s = 5)
+            if limitsOk:
+                plt.scatter(Z_list, R_list, color = 'green', s = 0.3, label = 'KalmanFitter steps')
+            else:
+                plt.scatter(Z_list, R_list, facecolors='none', edgecolors='green', s = 0.3, label = 'KalmanFitter steps')
         else: 
-            plt.scatter(Z_list, R_list, color = 'red', s = 5)
-            
+            plt.scatter(Z_list, R_list, color = 'red', s = 0.3, label = 'KalmanFitter steps')
             
         # Print the pixels hits and the direction only if required:
         if withDirection:
             if x_dir != 0: plt.arrow(0, 0, z_dir*1000, r_dir*1000, head_width=50, head_length=100, fc='black', ec='black')
         if withHits:
             if x_hit != []: plt.scatter(z_hit, r_hit, color = 'blue', s = 5, marker='x')
-            
-            
-        plt.xlabel('z')
-        plt.ylabel('r')
-        #plt.xlim(-1*getLastEntry(Z_list), getLastEntry(Z_list))
-        #plt.ylim(0, getLastEntry(R_list))
-            
-        plt.savefig(f"NegMuons_BarrelOnly_rz_.png")
-        #plt.savefig(f"{filename.strip().split('.')[0]}_rz_.pdf")
+        if withIDAnalysis:
+            print(">>>> TRACK INDEX: ",i)
+            plotBefore_reFit_hits(True, i)
+            x_detId, y_detId, z_detId, r_detId = runDetIDAnalysis(lines)
+            if x_detId != []: plt.scatter(z_detId, r_detId, facecolors='none', edgecolors='red', s = 0.3, label = 'sensitive after reFit')
+     
+    if withIDAnalysis: 
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        plt.legend(by_label.values(), by_label.keys(), markerscale=10.0)
+    plt.xlabel('z')
+    plt.ylabel('r')
+    #plt.xlim(-1*getLastEntry(Z_list), getLastEntry(Z_list))
+    #plt.ylim(0, getLastEntry(R_list))
+        
+    #plt.savefig(f"NegMuons_BarrelOnly_rz_.png")
+    plt.savefig(f"{filename.strip().split('.')[0]}_rz_.pdf")
+    plt.savefig(f"{filename.strip().split('.')[0]}_rz_.png")
     
     plt.figure()    
     plotCMS(zr = False)
     for i, track in enumerate(tracks):
         isOk = False
-        #if i != this_track: continue  # USE THIS TO SELECT A GIVEN TRACK
+        if i not in this_tracks: continue  # USE THIS TO SELECT A GIVEN TRACK
         if len(track) < 50: break
         lines = track.splitlines()
         if '>>>> Fitted parameters:' in lines: isOk = True
@@ -158,25 +264,31 @@ if __name__ == '__main__':
         x_hit, y_hit, z_hit, r_hit = getPixelsHits(lines)
         
         if isOk: 
-            plt.scatter(X_list, Y_list, color = 'green', s = 5)
+            plt.scatter(X_list, Y_list, color = 'green', s = 0.3, label = 'KalmanFitter steps')
         else: 
-            plt.scatter(X_list, Y_list, color = 'red', s = 5)
-            
+            plt.scatter(X_list, Y_list, color = 'red', s = 0.3, label = 'KalmanFitter steps')
         
-        # Print the pixels hits and the direction only if required:
         if withDirection:
-            if x_dir != 0: plt.arrow(0, 0, x_dir*1000, y_dir*1000, head_width=50, head_length=100, fc='black', ec='black')
+            if x_dir != 0: plt.arrow(0, 0, z_dir*1000, r_dir*1000, head_width=50, head_length=100, fc='black', ec='black')
         if withHits:
-            if x_hit != []: plt.scatter(x_hit, y_hit, color = 'blue', s = 5, marker='x')
-              
-        plt.xlabel('x')
-        plt.ylabel('y')
-        #plt.xlim(-1*getLastEntry(X_list), getLastEntry(X_list))
-        #plt.ylim(-1*getLastEntry(Y_list), getLastEntry(Y_list))
-            
-        plt.savefig(f"{filename.strip().split('.')[0]}_xy_.png")
-        plt.savefig(f"NegMuons_BarrelOnly_xy_.png")
-        #plt.savefig(f"{filename.strip().split('.')[0]}_xy_.pdf")
+            if x_hit != []: plt.scatter(z_hit, r_hit, color = 'blue', s = 5, marker='x')
+        if withIDAnalysis:
+            plotBefore_reFit_hits(False, i)
+            x_detId, y_detId, z_detId, r_detId = runDetIDAnalysis(lines)
+            if x_detId != []: plt.scatter(x_detId, y_detId, s = 0.3, marker='*', facecolors='none', edgecolors='red', label = 'sensitive after reFit')
+           
+    if withIDAnalysis:    
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        plt.legend(by_label.values(), by_label.keys(), markerscale=10.0)     
+    plt.xlabel('x')
+    plt.ylabel('y')
+    #plt.xlim(-1*getLastEntry(X_list), getLastEntry(X_list))
+    #plt.ylim(-1*getLastEntry(Y_list), getLastEntry(Y_list))
+        
+    plt.savefig(f"{filename.strip().split('.')[0]}_xy_.png")
+    #plt.savefig(f"NegMuons_BarrelOnly_xy_.png")
+    plt.savefig(f"{filename.strip().split('.')[0]}_xy_.pdf")
         
         
     

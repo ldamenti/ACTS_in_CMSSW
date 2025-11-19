@@ -413,6 +413,40 @@ void makeBinning(auto& layer, Acts::SurfaceArrayNavigationPolicy::LayerType laye
                             .asUniquePtr()); 
 }
 
+void AddExtraLayer(std::string gapName, 
+                   bool isBarrel, 
+                   Acts::Experimental::CylinderContainerBlueprintNode* cont,
+                   Acts::Transform3 transform,
+                   std::shared_ptr<Acts::CylinderVolumeBounds> bounds){
+
+  Acts::Transform3 base{Acts::Transform3::Identity()};  
+  Acts::AxisDirection DirectionBuild;
+  if(!isBarrel){
+    DirectionBuild =  Acts::AxisDirection::AxisZ;
+  } else {
+    DirectionBuild =  Acts::AxisDirection::AxisR;
+  }              
+  cont->addCylinderContainer(gapName.c_str(), DirectionBuild, [&](auto& gap) {
+    gap.setAttachmentStrategy(Acts::VolumeAttachmentStrategy::Gap)
+       .setResizeStrategy(Acts::VolumeResizeStrategy::Gap);
+
+    gap.addMaterial(gapName.c_str(), [&](Acts::Experimental::MaterialDesignatorBlueprintNode& mat){
+      if(!isBarrel){
+        mat.configureFace(Acts::CylinderVolumeBounds::Face::NegativeDisc, {Acts::AxisDirection::AxisR, Acts::AxisBoundaryType::Bound, 100}, {Acts::AxisDirection::AxisPhi, Acts::AxisBoundaryType::Bound, 100});
+        mat.configureFace(Acts::CylinderVolumeBounds::Face::PositiveDisc, {Acts::AxisDirection::AxisR, Acts::AxisBoundaryType::Bound, 100}, {Acts::AxisDirection::AxisPhi, Acts::AxisBoundaryType::Bound, 100});
+      }
+      else{
+        mat.configureFace(Acts::CylinderVolumeBounds::Face::OuterCylinder, {Acts::AxisDirection::AxisRPhi, Acts::AxisBoundaryType::Bound, 100}, {Acts::AxisDirection::AxisZ, Acts::AxisBoundaryType::Bound, 100});                  
+      }
+
+      mat.addCylinderContainer(gapName.c_str(), Acts::AxisDirection::AxisZ, [&](auto& L) {
+        L.addStaticVolume(base * transform, bounds, gapName.c_str());
+      });
+    });       
+  });
+
+};
+
 struct myMutableVisitor : public Acts::TrackingGeometryMutableVisitor {
     std::vector<Acts::Surface*> SurfVec;
     void visitSurface(Acts::Surface& surface) {
@@ -868,8 +902,11 @@ std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produc
               AddDiskLayer_and_Material(&ec, "NegTEC3", makeLayer, -1744*Acts::UnitConstants::mm, 80, 6);
               AddDiskLayer_and_Material(&ec, "NegTEC4", makeLayer, -1883*Acts::UnitConstants::mm, 80, 6);
               AddDiskLayer_and_Material(&ec, "NegTEC5", makeLayer, -2058*Acts::UnitConstants::mm, 80, 6);
+              AddExtraLayer("ExtraECMatLater4", false, &ec, GenerateTranslation(0, 0, -2150*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 1200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
               AddDiskLayer_and_Material(&ec, "NegTEC6", makeLayer, -2248*Acts::UnitConstants::mm, 80, 7);
+              AddExtraLayer("ExtraECMatLater5", false, &ec, GenerateTranslation(0, 0, -2350*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 1200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
               AddDiskLayer_and_Material(&ec, "NegTEC7", makeLayer, -2454*Acts::UnitConstants::mm, 80, 7);
+              AddExtraLayer("ExtraECMatLater6", false, &ec, GenerateTranslation(0, 0, -2550*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 1200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
 
               ec.addLayer("NegTEC8", [&](auto& layer) {
                 makeLayer(base * Acts::Translation3{Acts::Vector3{0, 0, -2666*Acts::UnitConstants::mm}}, layer, "NegTEC8", 80, 7);
@@ -877,6 +914,9 @@ std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produc
 
 
             });
+        
+        AddExtraLayer("extra_ecneg", false, &det, GenerateTranslation(0, 0, -1150*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 1200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
+        AddExtraLayer("extra_ecneg2", false, &det, GenerateTranslation(0, 0, -1200*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 1200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
                     
         det.addCylinderContainer("Pixel_TIB_TID_TOB", Acts::AxisDirection::AxisR, [&](auto& barr) { 
           barr.setAttachmentStrategy(Acts::VolumeAttachmentStrategy::Gap)
@@ -885,6 +925,10 @@ std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produc
           barr.addCylinderContainer("Pixel", Acts::AxisDirection::AxisZ, [&](auto& cyl) { 
             cyl.setAttachmentStrategy(Acts::VolumeAttachmentStrategy::Gap)
                 .setResizeStrategy(Acts::VolumeResizeStrategy::Gap);
+            
+            AddExtraLayer("extra_after_frwPixelNeg1", false, &cyl, GenerateTranslation(0, 0, -800*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
+            AddExtraLayer("extra_after_frwPixelNeg2", false, &cyl, GenerateTranslation(0, 0, -700*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
+            AddExtraLayer("extra_after_frwPixelNeg3", false, &cyl, GenerateTranslation(0, 0, -600*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
              
             cyl.addCylinderContainer(
                 "PixelNegativeEndcap", Acts::AxisDirection::AxisZ, [&](auto& ec) {
@@ -946,6 +990,10 @@ std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produc
                   AddDiskLayer_and_Material(&ec, "PixelPos1", makeLayer, 395*Acts::UnitConstants::mm, 36, 2);
                   AddDiskLayer_and_Material(&ec, "PixelPos2", makeLayer, 493*Acts::UnitConstants::mm, 36, 2);
                 });
+
+            AddExtraLayer("extra_after_frwPixelPos1", false, &cyl, GenerateTranslation(0, 0, 600*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
+            AddExtraLayer("extra_after_frwPixelPos2", false, &cyl, GenerateTranslation(0, 0, 700*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
+            AddExtraLayer("extra_after_frwPixelPos3", false, &cyl, GenerateTranslation(0, 0, 800*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
               
             });
 
@@ -1039,6 +1087,9 @@ std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produc
             
           });
 
+          AddExtraLayer("ExtraTIB_TOBMatLayer1", true, &barr, GenerateTranslation(0, 0, 0), std::make_shared<Acts::CylinderVolumeBounds>(530*Acts::UnitConstants::mm, 540*Acts::UnitConstants::mm, 1000*Acts::UnitConstants::mm));
+          AddExtraLayer("ExtraTIB_TOBMatLayer2", true, &barr, GenerateTranslation(0, 0, 0), std::make_shared<Acts::CylinderVolumeBounds>(560*Acts::UnitConstants::mm, 570*Acts::UnitConstants::mm, 1000*Acts::UnitConstants::mm));
+
           barr.addCylinderContainer(
               "TOB", Acts::AxisDirection::AxisR, [&](auto& brl) {
                 brl.setAttachmentStrategy(Acts::VolumeAttachmentStrategy::Gap)
@@ -1063,10 +1114,15 @@ std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produc
 
                 // makeLayer("Layer_name", Bin_Phi, Bin_Z)
                 AddCylinderLayer_and_Material(&brl, "TOB0", Kdtsurfaces, 42, 10);
+                AddExtraLayer("ExtraTOBMatLayer1", true, &brl, GenerateTranslation(0, 0, 0), std::make_shared<Acts::CylinderVolumeBounds>(650*Acts::UnitConstants::mm, 655*Acts::UnitConstants::mm, 1000*Acts::UnitConstants::mm));
                 AddCylinderLayer_and_Material(&brl, "TOB1", Kdtsurfaces, 48, 10);
+                AddExtraLayer("ExtraTOBMatLayer2", true, &brl, GenerateTranslation(0, 0, 0), std::make_shared<Acts::CylinderVolumeBounds>(740*Acts::UnitConstants::mm, 750*Acts::UnitConstants::mm, 1000*Acts::UnitConstants::mm));
                 AddCylinderLayer_and_Material(&brl, "TOB2", Kdtsurfaces, 54, 10);
+                AddExtraLayer("ExtraTOBMatLayer3", true, &brl, GenerateTranslation(0, 0, 0), std::make_shared<Acts::CylinderVolumeBounds>(805*Acts::UnitConstants::mm, 810*Acts::UnitConstants::mm, 1000*Acts::UnitConstants::mm));
                 AddCylinderLayer_and_Material(&brl, "TOB3", Kdtsurfaces, 60, 10);
+                AddExtraLayer("ExtraTOBMatLayer4", true, &brl, GenerateTranslation(0, 0, 0), std::make_shared<Acts::CylinderVolumeBounds>(940*Acts::UnitConstants::mm, 943*Acts::UnitConstants::mm, 1000*Acts::UnitConstants::mm));
                 AddCylinderLayer_and_Material(&brl, "TOB4", Kdtsurfaces, 66, 10);
+                AddExtraLayer("ExtraTOBMatLayer5", true, &brl, GenerateTranslation(0, 0, 0), std::make_shared<Acts::CylinderVolumeBounds>(1000*Acts::UnitConstants::mm, 1050*Acts::UnitConstants::mm, 1000*Acts::UnitConstants::mm));
                 //AddCylinderLayer_and_Material(&brl, "TOB5", Kdtsurfaces, 74, 10);
 
                 makeLayer("TOB5", 74,10);
@@ -1098,14 +1154,21 @@ std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produc
               AddDiskLayer_and_Material(&ec, "PosTEC3", makeLayer, 1744*Acts::UnitConstants::mm, 80, 6);
               AddDiskLayer_and_Material(&ec, "PosTEC4", makeLayer, 1883*Acts::UnitConstants::mm, 80, 6);
               AddDiskLayer_and_Material(&ec, "PosTEC5", makeLayer, 2058*Acts::UnitConstants::mm, 80, 6);
+              AddExtraLayer("ExtraECMatLater1", false, &ec, GenerateTranslation(0, 0, 2150*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 1200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
               AddDiskLayer_and_Material(&ec, "PosTEC6", makeLayer, 2248*Acts::UnitConstants::mm, 80, 7);
+              AddExtraLayer("ExtraECMatLater2", false, &ec, GenerateTranslation(0, 0, 2350*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 1200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
               AddDiskLayer_and_Material(&ec, "PosTEC7", makeLayer, 2454*Acts::UnitConstants::mm, 80, 7);
+              AddExtraLayer("ExtraECMatLater3", false, &ec, GenerateTranslation(0, 0, 2550*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 1200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
 
               ec.addLayer("PosTEC8", [&](auto& layer) {
                 makeLayer(base * Acts::Translation3{Acts::Vector3{0, 0, 2666*Acts::UnitConstants::mm}}, layer, "PosTEC8", 80, 7);
               });
 
             });
+
+
+        AddExtraLayer("extra_ecpos", false, &det, GenerateTranslation(0, 0, 1150*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 1200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
+        AddExtraLayer("extra_ecpos2", false, &det, GenerateTranslation(0, 0, 1200*Acts::UnitConstants::mm), std::make_shared<Acts::CylinderVolumeBounds>(10*Acts::UnitConstants::mm, 1200*Acts::UnitConstants::mm, 10*Acts::UnitConstants::mm));
            
       });
  

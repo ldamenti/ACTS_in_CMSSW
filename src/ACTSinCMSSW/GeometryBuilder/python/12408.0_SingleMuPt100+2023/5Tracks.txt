@@ -1,0 +1,869 @@
+------------------------------------------------------------------------------
+TauSpinnerTableProducer/tauSpinnerTable
+Input collection: prunedGenParticles
+Table name: TauSpinner
+Theta: 0,0p25,0p5,minus0p25,0p375,
+
+ *************************************
+ *     TAUOLA C++ Interface v1.1.8   *
+ *-----------------------------------*
+ *                                   *
+ *   (c) Nadia    Davidson,   (1,2)  *
+ *   (c) Gizo     Nanava,     (3)    *
+ *       Tomasz   Przedzinski,(4)    *
+ *       Elzbieta Richter-Was,(2,4)  *
+ *       Zbigniew Was         (2,5)  *
+ *                                   *
+ *  1) Unimelb, Melbourne, Australia *
+ *  2)     INP, Krakow, Poland       *
+ *  3) University Bonn, Germany      *
+ *  4)      UJ, Krakow, Poland       *
+ *  5)    CERN, Geneva, Switzerland  *
+ *************************************
+Reading SANC input files.
+File 'table1-1.txt'  missing... skipped.
+File 'table2-2.txt'  missing... skipped.
+File 'table11-11.txt' missing... skipped.
+
+initPDFSetByName: NNPDF31_nnlo_hessian_pdfas
+LHAPDF 6.4.0 loading /cvmfs/cms.cern.ch/el9_amd64_gcc13/external/lhapdf/6.4.0-2eb83ba3df468330e902fb8a81d46b4c/share/LHAPDF/NNPDF31_nnlo_hessian_pdfas/NNPDF31_nnlo_hessian_pdfas_0000.dat
+NNPDF31_nnlo_hessian_pdfas PDF set, member #0, version 1; LHAPDF ID = 306000
+ ------------------------------------------------------
+ TauSpinner v2.0.4
+ -----------------
+   15.Aug.2017    
+ by Z. Czyczula (until 2015), T. Przedzinski, E. Richter-Was, Z. Was,
+  matrix elements implementations 
+  also J. Kalinowski, W. Kotlarski and  M. Bachmani
+ ------------------------------------------------------
+ Ipp - true for pp collision; otherwise polarization
+       of individual taus from Z/gamma* is set to 0.0
+ Ipp    = 1
+ CMSENE - used in PDF calculations; only if Ipp = true
+          and only for Z/gamma*
+ CMSENE = 13600
+ Ipol - relevant for Z/gamma* decays 
+ 0 - events generated without spin effects                
+ 1 - events generated with all spin effects               
+ 2 - events generated with spin correlations and <pol>=0  
+ 3 - events generated with spin correlations and
+     polarization but missing angular dependence of <pol>
+ Ipol    = 0
+ Ipol - relevant for Z/gamma* decays 
+ NOTE: For Ipol=0,1 algorithm is identical.               
+       However in user program role of wt need change.    
+ nonSM2  = 0
+ 1/0 extra term in cross section, density matrix on/off   
+ nonSMN  = 0
+ 1/0 extra term in cross section, for shapes only? on/off 
+ note KEY - for options of matrix elements calculations   
+            in cases of final states  with two jets       
+ ------------------------------------------------------   
+>>> Flag saveObjfile True <<<
+Saving detector elements as obj file in the range: 
+R = [0, 1200]
+Z = [-1000, 1000]
+>>> Storing all the surfaces into a json file <<<
+15:46:35    UnitTests      INFO      [Root]: Building tracking geometry from blueprint tree
+>>> Flag saveSvgfile True <<<
+Saving tracking geometry blueprint in testSvg_output.svg
+>>> Flag mapMaterial_ True <<<
+Mapping material on sensitive surfaces, from ../MaterialMaps.json
+#--------------------------------------------------------------------------
+#                         FastJet release 3.4.1
+#                 M. Cacciari, G.P. Salam and G. Soyez                  
+#     A software package for jet finding and analysis at colliders      
+#                           http://fastjet.fr                           
+#	                                                                      
+# Please cite EPJC72(2012)1896 [arXiv:1111.6097] if you use this package
+# for scientific work and optionally PLB641(2006)57 [hep-ph/0512210].   
+#                                                                       
+# FastJet is provided without warranty under the GNU GPL v2 or higher.  
+# It uses T. Chan's closest pair algorithm, S. Fortune's Voronoi code
+# and 3rd party plugin jet algorithms. See COPYING file for details.
+#--------------------------------------------------------------------------
+==============================================================
+========     HiggsTemplateCrossSections Initialization     =========
+==============================================================
+Rivet.Analysis.HiggsTemplateCrossSections: WARN  No HIGGSPRODMODE shell variable found. Needed when running Rivet stand-alone.
+==============================================================
+========             Higgs prod mode 0              =========
+========          Sucessful Initialization           =========
+==============================================================
+Rivet.Analysis.HiggsTemplateCrossSections: WARN  Unkown Higgs production mechanism. Cannot classify event. Classification for all events will most likely fail.
+################################################################################################ 
+===== Reco track associated to a Tracking Particle: =====
+px: 4.3023; py: -3.29086; pz: -8.40531; Energy: 10
+Vertex position -> x: 0.451833; y: -0.172375; z: 26.209
+Eta: -1.22314; Phi: -0.652974
+Mass: 0.105658; Charge: -1; ParticleID: 13; Quality: 1
+==== Parameters of the RECO Track: ==== 
+4D Position (x, y, z, t): 0.456574 -0.173992 26.241 0 
+3D Direction: 0.430075 -0.329067 -0.840685
+qoverP: -0.100752
+covariance: [  2.52756e-06 1.63034e-09 3.37343e-07-1.01554e-06-2.02959e-08
+   1.63034e-09 7.59561e-08 1.27134e-09-1.17644e-08-5.88096e-07
+   3.37343e-07 1.27134e-09 2.68892e-07-9.79691e-07-1.74496e-08
+  -1.01554e-06-1.17644e-08-9.79691e-07 4.23608e-06 1.54105e-07
+  -2.02959e-08-5.88096e-07-1.74496e-08 1.54105e-07  5.8956e-06 ]
+chi2 / ndof = 0.829185
+Particle ID = 13
+PixelBarrel Hit: 
+Hit local pos: (-3.82363, -12.6416) ± (0.0535521, 0.0495912)
+PixelBarrel Hit: 
+Hit local pos: (-6.57237, -24.8403) ± (0.013048, 0.0232485)
+PixelBarrel Hit: 
+Hit local pos: (0.445823, -28.2284) ± (0.0112535, 0.0231619)
+PixelBarrel Hit: 
+Hit local pos: (-0.638093, -10.7005) ± (0.0107085, 0.022979)
+TIB Hit: 
+Hit local pos: (28.7124, 0) ± (0.023094, 33.7418)
+TIB Hit: 
+Hit local pos: (-26.7659, 0) ± (0.023094, 33.7418)
+TIB Hit: 
+Hit local pos: (28.0654, 0) ± (0.023094, 33.7418)
+TIB Hit: 
+Hit local pos: (10.8163, 0) ± (0.023094, 33.7418)
+TIB Hit: 
+Hit local pos: (-13.1872, 0) ± (0.023094, 33.7418)
+TIB Hit: 
+Hit local pos: (-3.44245, 0) ± (0.034641, 33.7418)
+TID Hit: 
+Hit local pos: (-12.4516, 0) ± (0.88992, 31.9448)
+TOB Hit: 
+Hit local pos: (42.5183, 0) ± (0.0528276, 53.7323)
+TOB Hit: 
+Hit local pos: (42.6226, 0) ± (0.0528276, 53.7323)
+TOB Hit: 
+Hit local pos: (-46.0654, 0) ± (0.0528276, 53.7323)
+TOB Hit: 
+Hit local pos: (33.864, 0) ± (0.0528276, 53.7323)
+TOB Hit: 
+Hit local pos: (-26.9259, 0) ± (0.0528276, 53.7323)
+TEC Hit: 
+Hit local pos: (-44.0322, 0) ± (2.85742, 53.1416)
+TEC Hit: 
+Hit local pos: (43.6838, 0) ± (2.83481, 53.1416)
+TEC Hit: 
+Hit local pos: (0.53062, 0) ± (0.0549552, 59.0963)
+TEC Hit: 
+Hit local pos: (-8.9088, 0) ± (0.533284, 59.0963)
+PIXEL -> local x: -3.82363+-; local y: -12.6416
+PIXEL -> local x: -6.57237+-; local y: -24.8403
+PIXEL -> local x: 0.445823+-; local y: -28.2284
+PIXEL -> local x: -0.638093+-; local y: -10.7005
+STRIP -> local x: 28.7124; local y: 0
+STRIP -> local x: -26.7659; local y: 0
+STRIP -> local x: 28.0654; local y: 0
+STRIP -> local x: 10.8163; local y: 0
+STRIP -> local x: -13.1872; local y: 0
+STRIP -> local x: -3.44245; local y: 0
+STRIP -> local x: -12.4516; local y: 0
+STRIP -> local x: 42.5183; local y: 0
+STRIP -> local x: 42.6226; local y: 0
+STRIP -> local x: -46.0654; local y: 0
+STRIP -> local x: 33.864; local y: 0
+STRIP -> local x: -26.9259; local y: 0
+STRIP -> local x: -44.0322; local y: 0
+STRIP -> local x: 43.6838; local y: 0
+STRIP -> local x: 0.53062; local y: 0
+STRIP -> local x: -8.9088; local y: 0
+ACTS detId before the fit 303083536; subDet = PixelBarrel
+ACTS detId before the fit 304193548; subDet = PixelBarrel
+ACTS detId before the fit 305299464; subDet = PixelBarrel
+ACTS detId before the fit 306421764; subDet = PixelBarrel
+ACTS detId before the fit 369121721; subDet = TIB
+ACTS detId before the fit 369121737; subDet = TIB
+ACTS detId before the fit 369121738; subDet = TIB
+ACTS detId before the fit 369138237; subDet = TIB
+ACTS detId before the fit 369138238; subDet = TIB
+ACTS detId before the fit 369154732; subDet = TIB
+ACTS detId before the fit 402665292; subDet = TID
+ACTS detId before the fit 436229369; subDet = TOB
+ACTS detId before the fit 436229338; subDet = TOB
+ACTS detId before the fit 436229337; subDet = TOB
+ACTS detId before the fit 436245913; subDet = TOB
+ACTS detId before the fit 436245914; subDet = TOB
+ACTS detId before the fit 470051012; subDet = TEC
+ACTS detId before the fit 470046924; subDet = TEC
+ACTS detId before the fit 470063348; subDet = TEC
+ACTS detId before the fit 470079732; subDet = TEC
+>>>>> Number of source links: 20
+>>>>> Number Rec Hits: 20
+Outliers: 0
+>>>> Fitted parameters:
+Fitted global position: x = 0.451833 y = -0.172375 z = 26.2637 t = 0
+Fitted direction (normalized): x = 0.431381 y = -0.327323 z = -0.840696
+loc0 = -0.200449
+loc1 = 0.0546018
+phi = -0.649095
+theta = 2.56936
+q Over P = -0.0819941
+covariance = 
+  0.00184818   0.00010804 -2.92875e-05  4.83373e-07 -5.97183e-05 -1.84088e-05
+  0.00010804   0.00301836 -1.81684e-06   1.2823e-05 -3.02782e-06 -1.51564e-06
+-2.92875e-05 -1.81684e-06  5.27802e-07 -7.62444e-09  1.23034e-06  3.01789e-07
+ 4.83373e-07   1.2823e-05 -7.62444e-09  6.70556e-08 -1.24246e-08 -7.01112e-09
+-5.97183e-05 -3.02782e-06  1.23034e-06 -1.24246e-08  6.07429e-06  6.23431e-07
+-1.84088e-05 -1.51564e-06  3.01789e-07 -7.01112e-09  6.23431e-07      89875.5
+ThisID: 470063348
+ThisID: 470063344
+ThisID: 470051012
+ThisID: 436245914
+ThisID: 436245912
+ThisID: 436245913
+ThisID: 436229337
+ThisID: 436229336
+ThisID: 436229338
+ThisID: 369154732
+ThisID: 369138238
+ThisID: 369138236
+ThisID: 369138237
+ThisID: 369121738
+ThisID: 369121736
+ThisID: 369121737
+ThisID: 369121722
+ThisID: 369121720
+ThisID: 369121721
+ThisID: 306421764
+ThisID: 305299464
+ThisID: 304193548
+ThisID: 303083536
+Inner detId Identified! With id: 303083536
+Rivet.Analysis.HiggsTemplateCrossSections: WARN  Unkown Higgs production mechanism. Cannot classify event. Classification for all events will most likely fail.
+################################################################################################ 
+===== Reco track associated to a Tracking Particle: =====
+px: -0.0524243; py: 5.44555; pz: -8.38642; Energy: 10
+Vertex position -> x: 0.450149; y: -0.172793; z: 5.90178
+Eta: -1.21674; Phi: 1.58042
+Mass: 0.105658; Charge: -1; ParticleID: 13; Quality: 1
+==== Parameters of the RECO Track: ==== 
+4D Position (x, y, z, t): 0.447477 -0.169858 5.85652 0 
+3D Direction: -0.00523118 0.544737 -0.838591
+qoverP: -0.101569
+covariance: [  2.33349e-06-4.69284e-09 3.01478e-07-9.41794e-07 7.10464e-08
+  -4.69284e-09 9.34639e-08-6.37055e-09 3.93624e-08 -7.8832e-07
+   3.01478e-07-6.37055e-09 3.01277e-07-1.22343e-06 9.64705e-08
+  -9.41794e-07 3.93624e-08-1.22343e-06 6.05191e-06-6.01702e-07
+   7.10464e-08 -7.8832e-07 9.64705e-08-6.01702e-07 8.36154e-06 ]
+chi2 / ndof = 0.883106
+Particle ID = 13
+PixelBarrel Hit: 
+Hit local pos: (-7.88891, 4.72817) ± (0.0165941, 0.0301753)
+PixelBarrel Hit: 
+Hit local pos: (-7.84779, -4.10321) ± (0.0134403, 0.0256859)
+PixelBarrel Hit: 
+Hit local pos: (-7.73603, 5.47095) ± (0.00618592, 0.0206586)
+PixelBarrel Hit: 
+Hit local pos: (-5.58819, -8.09831) ± (0.0127071, 0.0227479)
+PixelBarrel Hit: 
+Hit local pos: (-3.80425, 3.40688) ± (0.0114055, 0.0222669)
+TIB Hit: 
+Hit local pos: (12.0521, 0) ± (0.023094, 33.7418)
+TIB Hit: 
+Hit local pos: (-10.0399, 0) ± (0.023094, 33.7418)
+TIB Hit: 
+Hit local pos: (-17.6295, 0) ± (0.023094, 33.7418)
+TIB Hit: 
+Hit local pos: (16.4595, 0) ± (0.023094, 33.7418)
+TIB Hit: 
+Hit local pos: (-23.8144, 0) ± (0.034641, 33.7418)
+TID Hit: 
+Hit local pos: (-27.0766, 0) ± (1.93359, 31.9448)
+TOB Hit: 
+Hit local pos: (30.2682, 0) ± (0.0528276, 53.7323)
+TOB Hit: 
+Hit local pos: (31.5541, 0) ± (0.0528276, 53.7323)
+TOB Hit: 
+Hit local pos: (-39.1426, 0) ± (0.0528276, 53.7323)
+TOB Hit: 
+Hit local pos: (31.0341, 0) ± (0.0528276, 53.7323)
+TOB Hit: 
+Hit local pos: (-28.275, 0) ± (0.0528276, 53.7323)
+TEC Hit: 
+Hit local pos: (-34.6561, 0) ± (2.2492, 53.1416)
+TEC Hit: 
+Hit local pos: (-27.3251, 0) ± (1.63049, 59.0963)
+TEC Hit: 
+Hit local pos: (-36.9759, 0) ± (2.20598, 59.0963)
+PIXEL -> local x: -7.88891+-; local y: 4.72817
+PIXEL -> local x: -7.84779+-; local y: -4.10321
+PIXEL -> local x: -7.73603+-; local y: 5.47095
+PIXEL -> local x: -5.58819+-; local y: -8.09831
+PIXEL -> local x: -3.80425+-; local y: 3.40688
+STRIP -> local x: 12.0521; local y: 0
+STRIP -> local x: -10.0399; local y: 0
+STRIP -> local x: -17.6295; local y: 0
+STRIP -> local x: 16.4595; local y: 0
+STRIP -> local x: -23.8144; local y: 0
+STRIP -> local x: -27.0766; local y: 0
+STRIP -> local x: 30.2682; local y: 0
+STRIP -> local x: 31.5541; local y: 0
+STRIP -> local x: -39.1426; local y: 0
+STRIP -> local x: 31.0341; local y: 0
+STRIP -> local x: -28.275; local y: 0
+STRIP -> local x: -34.6561; local y: 0
+STRIP -> local x: -27.3251; local y: 0
+STRIP -> local x: -36.9759; local y: 0
+ACTS detId before the fit 303054864; subDet = PixelBarrel
+ACTS detId before the fit 304119820; subDet = PixelBarrel
+ACTS detId before the fit 304115724; subDet = PixelBarrel
+ACTS detId before the fit 305184776; subDet = PixelBarrel
+ACTS detId before the fit 306253828; subDet = PixelBarrel
+ACTS detId before the fit 369121417; subDet = TIB
+ACTS detId before the fit 369121418; subDet = TIB
+ACTS detId before the fit 369137837; subDet = TIB
+ACTS detId before the fit 369137838; subDet = TIB
+ACTS detId before the fit 369154252; subDet = TIB
+ACTS detId before the fit 402665240; subDet = TID
+ACTS detId before the fit 436228470; subDet = TOB
+ACTS detId before the fit 436228474; subDet = TOB
+ACTS detId before the fit 436228473; subDet = TOB
+ACTS detId before the fit 436244921; subDet = TOB
+ACTS detId before the fit 436244922; subDet = TOB
+ACTS detId before the fit 470049736; subDet = TEC
+ACTS detId before the fit 470066152; subDet = TEC
+ACTS detId before the fit 470082536; subDet = TEC
+>>>>> Number of source links: 19
+>>>>> Number Rec Hits: 19
+Outliers: 0
+>>>> Fitted parameters:
+Fitted global position: x = 0.450149 y = -0.172793 z = 5.91238 t = 0
+Fitted direction (normalized): x = -0.00620162 y = 0.544629 z = -0.838654
+loc0 = -0.0597141
+loc1 = 0.0106085
+phi = 1.58218
+theta = 2.5656
+q Over P = -0.0887564
+covariance = 
+ 0.000819565 -0.000170676 -1.73383e-05 -6.57854e-07 -2.94803e-05  -3.1407e-06
+-0.000170676   0.00247437  2.62938e-06  1.40853e-05  4.95055e-06   7.1406e-07
+-1.73383e-05  2.62938e-06  4.36679e-07  9.83993e-09  9.05041e-07  6.74693e-08
+-6.57854e-07  1.40853e-05  9.83993e-09  9.93421e-08  2.03078e-08  3.01855e-09
+-2.94803e-05  4.95055e-06  9.05041e-07  2.03078e-08  7.01976e-06  9.55335e-08
+ -3.1407e-06   7.1406e-07  6.74693e-08  3.01855e-09  9.55335e-08      89875.5
+ThisID: 470082536
+Outer detId Identified! With id: 470082536
+ThisID: 470049736
+ThisID: 470049732
+ThisID: 436244922
+ThisID: 436244920
+ThisID: 436244921
+ThisID: 436228473
+ThisID: 436228472
+ThisID: 436228474
+ThisID: 402665240
+ThisID: 369154252
+ThisID: 369137838
+ThisID: 369137836
+ThisID: 369137837
+ThisID: 369121418
+ThisID: 369121416
+ThisID: 369121417
+ThisID: 306253828
+ThisID: 305184776
+ThisID: 304115724
+ThisID: 304119820
+ThisID: 303054864
+Inner detId Identified! With id: 303054864
+>>>>> INNER AND OUTER DETID IDENTIFIED
+Rivet.Analysis.HiggsTemplateCrossSections: WARN  Unkown Higgs production mechanism. Cannot classify event. Classification for all events will most likely fail.
+################################################################################################ 
+===== Reco track associated to a Tracking Particle: =====
+px: -0.912673; py: -2.5995; pz: -9.61241; Energy: 10
+Vertex position -> x: 0.453825; y: -0.185299; z: 31.816
+Eta: -1.9627; Phi: -1.90845
+Mass: 0.105658; Charge: -1; ParticleID: 13; Quality: 1
+==== Parameters of the RECO Track: ==== 
+4D Position (x, y, z, t): 0.494962 -0.182126 31.8687 0 
+3D Direction: -0.0914868 -0.259886 -0.961296
+qoverP: -0.0995154
+covariance: [  4.05098e-06-3.94732e-10 9.16583e-07-2.15074e-06 2.13831e-08
+  -3.94732e-10 1.08197e-07-2.75323e-10-6.00327e-09 -1.3503e-06
+   9.16583e-07-2.75323e-10 1.65831e-06-5.36761e-06 4.96228e-08
+  -2.15074e-06-6.00327e-09-5.36761e-06  1.8018e-05-1.04249e-07
+   2.13831e-08 -1.3503e-06 4.96228e-08-1.04249e-07 1.76074e-05 ]
+chi2 / ndof = 0.938588
+Particle ID = 13
+PixelBarrel Hit: 
+Hit local pos: (2.27899, -17.8217) ± (0.0151967, 0.0315494)
+PixelBarrel Hit: 
+Hit local pos: (0.213282, 30.0722) ± (0.0125827, 0.0277814)
+PixelEndcap Hit: 
+Hit local pos: (1.4425, -27.8983) ± (0.0100448, 0.0151705)
+PixelEndcap Hit: 
+Hit local pos: (-5.86877, -28.0677) ± (0.011354, 0.0131155)
+PixelEndcap Hit: 
+Hit local pos: (5.03673, 28.094) ± (0.0108932, 0.0129392)
+PixelEndcap Hit: 
+Hit local pos: (-0.195334, -6.40607) ± (0.00636583, 0.0100606)
+PixelEndcap Hit: 
+Hit local pos: (-2.63432, 20.7253) ± (0.0095828, 0.0148166)
+TID Hit: 
+Hit local pos: (-12.9736, 0) ± (1.44827, 32.0019)
+TID Hit: 
+Hit local pos: (7.30357, 0) ± (0.815659, 32.0019)
+TID Hit: 
+Hit local pos: (-6.39535, 0) ± (0.714364, 32.0019)
+TID Hit: 
+Hit local pos: (5.17681, 0) ± (0.578497, 32.0019)
+TID Hit: 
+Hit local pos: (-0.662103, 0) ± (0.0792675, 32.0019)
+TID Hit: 
+Hit local pos: (3.0302, 0) ± (0.339416, 32.0019)
+TID Hit: 
+Hit local pos: (-8.07683, 0) ± (0.561167, 25.4496)
+TID Hit: 
+Hit local pos: (3.11587, 0) ± (0.21912, 25.4496)
+TEC Hit: 
+Hit local pos: (-47.1302, 0) ± (3.26773, 25.4496)
+TEC Hit: 
+Hit local pos: (45.3113, 0) ± (3.14164, 25.4496)
+TEC Hit: 
+Hit local pos: (26.0897, 0) ± (1.86315, 31.9448)
+ERROR: Invalid Hit. Skipping.
+TEC Hit: 
+Hit local pos: (33.4567, 0) ± (2.38903, 31.9448)
+TEC Hit: 
+Hit local pos: (-35.2471, 0) ± (2.51684, 31.9448)
+TEC Hit: 
+Hit local pos: (-28.5702, 0) ± (1.69136, 33.2438)
+ERROR: Invalid Hit. Skipping.
+TEC Hit: 
+Hit local pos: (26.549, 0) ± (1.57176, 33.2438)
+TEC Hit: 
+Hit local pos: (23.4287, 0) ± (1.47209, 42.511)
+TEC Hit: 
+Hit local pos: (24.5596, 0) ± (1.5431, 42.511)
+TEC Hit: 
+Hit local pos: (-22.4458, 0) ± (1.41038, 42.511)
+TEC Hit: 
+Hit local pos: (26.8856, 0) ± (1.68915, 42.511)
+TEC Hit: 
+Hit local pos: (-30.5291, 0) ± (1.91793, 42.511)
+TEC Hit: 
+Hit local pos: (10.0077, 0) ± (0.651486, 53.1416)
+PIXEL -> local x: 2.27899+-; local y: -17.8217
+PIXEL -> local x: 0.213282+-; local y: 30.0722
+PIXEL -> local x: 1.4425+-; local y: -27.8983
+PIXEL -> local x: -5.86877+-; local y: -28.0677
+PIXEL -> local x: 5.03673+-; local y: 28.094
+PIXEL -> local x: -0.195334+-; local y: -6.40607
+PIXEL -> local x: -2.63432+-; local y: 20.7253
+STRIP -> local x: -12.9736; local y: 0
+STRIP -> local x: 7.30357; local y: 0
+STRIP -> local x: -6.39535; local y: 0
+STRIP -> local x: 5.17681; local y: 0
+STRIP -> local x: -0.662103; local y: 0
+STRIP -> local x: 3.0302; local y: 0
+STRIP -> local x: -8.07683; local y: 0
+STRIP -> local x: 3.11587; local y: 0
+STRIP -> local x: -47.1302; local y: 0
+STRIP -> local x: 45.3113; local y: 0
+STRIP -> local x: 26.0897; local y: 0
+STRIP -> local x: 33.4567; local y: 0
+STRIP -> local x: -35.2471; local y: 0
+STRIP -> local x: -28.5702; local y: 0
+STRIP -> local x: 26.549; local y: 0
+STRIP -> local x: 23.4287; local y: 0
+STRIP -> local x: 24.5596; local y: 0
+STRIP -> local x: -22.4458; local y: 0
+STRIP -> local x: 26.8856; local y: 0
+STRIP -> local x: -30.5291; local y: 0
+STRIP -> local x: 10.0077; local y: 0
+ACTS detId before the fit 303075340; subDet = PixelBarrel
+ACTS detId before the fit 304168968; subDet = PixelBarrel
+ACTS detId before the fit 344388612; subDet = PixelEndcap
+ACTS detId before the fit 344389636; subDet = PixelEndcap
+ACTS detId before the fit 344262660; subDet = PixelEndcap
+ACTS detId before the fit 344650756; subDet = PixelEndcap
+ACTS detId before the fit 344912900; subDet = PixelEndcap
+ACTS detId before the fit 402664101; subDet = TID
+ACTS detId before the fit 402664102; subDet = TID
+ACTS detId before the fit 402666149; subDet = TID
+ACTS detId before the fit 402666150; subDet = TID
+ACTS detId before the fit 402668197; subDet = TID
+ACTS detId before the fit 402668198; subDet = TID
+ACTS detId before the fit 402668709; subDet = TID
+ACTS detId before the fit 402668710; subDet = TID
+ACTS detId before the fit 470050634; subDet = TEC
+ACTS detId before the fit 470050633; subDet = TEC
+ACTS detId before the fit 470046308; subDet = TEC
+ACTS detId before the fit 470079076; subDet = TEC
+ACTS detId before the fit 470099820; subDet = TEC
+ACTS detId before the fit 470095492; subDet = TEC
+ACTS detId before the fit 470132624; subDet = TEC
+ACTS detId before the fit 470128293; subDet = TEC
+ACTS detId before the fit 470144677; subDet = TEC
+ACTS detId before the fit 470144678; subDet = TEC
+ACTS detId before the fit 470161061; subDet = TEC
+ACTS detId before the fit 470161062; subDet = TEC
+ACTS detId before the fit 470181840; subDet = TEC
+>>>>> Number of source links: 28
+>>>>> Number Rec Hits: 30
+Outliers: 0
+>>>> Fitted parameters:
+Fitted global position: x = 0.453825 y = -0.185299 z = 31.7778 t = 0
+Fitted direction (normalized): x = -0.0920109 y = -0.259728 z = -0.961288
+loc0 = 0.109332
+loc1 = -0.0382425
+phi = -1.91126
+theta = 2.86244
+q Over P = -0.107529
+covariance = 
+  0.00278662 -0.000290384 -8.19922e-05 -1.44516e-07  -0.00016463   3.9646e-05
+-0.000290384    0.0181256  5.42063e-06  3.77605e-05  1.57834e-05  1.97432e-07
+-8.19922e-05  5.42063e-06  2.65155e-06 -7.91292e-11  6.33258e-06 -1.20708e-06
+-1.44516e-07  3.77605e-05 -7.91292e-11   8.2749e-08  9.53888e-09  7.09488e-09
+ -0.00016463  1.57834e-05  6.33258e-06  9.53888e-09  2.77899e-05 -2.65516e-06
+  3.9646e-05  1.97432e-07 -1.20708e-06  7.09488e-09 -2.65516e-06      89875.5
+ThisID: 470161062
+ThisID: 470161060
+ThisID: 470161061
+ThisID: 470144678
+ThisID: 470144676
+ThisID: 470144677
+ThisID: 470128292
+ThisID: 470132624
+ThisID: 470111876
+ThisID: 470116240
+ThisID: 470079076
+ThisID: 470083436
+ThisID: 470062692
+ThisID: 470046276
+ThisID: 470050632
+ThisID: 402668710
+ThisID: 402668708
+ThisID: 402668709
+ThisID: 402668198
+ThisID: 402668196
+ThisID: 402668197
+ThisID: 402666150
+ThisID: 402666148
+ThisID: 402666149
+ThisID: 402664100
+ThisID: 344912900
+ThisID: 344650756
+ThisID: 344262660
+ThisID: 344389636
+ThisID: 344388612
+ThisID: 304168968
+ThisID: 303075340
+Inner detId Identified! With id: 303075340
+Rivet.Analysis.HiggsTemplateCrossSections: WARN  Unkown Higgs production mechanism. Cannot classify event. Classification for all events will most likely fail.
+################################################################################################ 
+===== Reco track associated to a Tracking Particle: =====
+px: -3.603; py: 1.06089; pz: 9.26724; Energy: 10
+Vertex position -> x: 0.472706; y: -0.167869; z: -42.8076
+Eta: 1.63504; Phi: 2.85524
+Mass: 0.105658; Charge: -1; ParticleID: 13; Quality: 1
+==== Parameters of the RECO Track: ==== 
+4D Position (x, y, z, t): 0.458858 -0.171886 -42.802 0 
+3D Direction: -0.360198 0.106078 0.926825
+qoverP: -0.0995315
+covariance: [  2.11655e-06 2.37974e-10 3.44568e-07-8.10928e-07-9.30168e-09
+   2.37974e-10 8.89129e-08 3.01539e-10 1.85644e-09-8.27505e-07
+   3.44568e-07 3.01539e-10 6.14614e-07-1.87367e-06-1.94086e-08
+  -8.10928e-07 1.85644e-09-1.87367e-06 6.48932e-06 3.90784e-08
+  -9.30168e-09-8.27505e-07-1.94086e-08 3.90784e-08 9.53704e-06 ]
+chi2 / ndof = 0.981268
+Particle ID = 13
+PixelBarrel Hit: 
+Hit local pos: (-0.959578, 7.43867) ± (0.0138231, 0.0249616)
+PixelBarrel Hit: 
+Hit local pos: (-3.11115, -29.2516) ± (0.011496, 0.0265101)
+PixelBarrel Hit: 
+Hit local pos: (5.87896, 3.25009) ± (0.0583222, 0.051219)
+PixelEndcap Hit: 
+Hit local pos: (-5.55935, 18.7519) ± (0.00994365, 0.0185441)
+TIB Hit: 
+Hit local pos: (-26.7502, 0) ± (0.023094, 33.7418)
+TIB Hit: 
+Hit local pos: (29.9626, 0) ± (0.023094, 33.7418)
+TID Hit: 
+Hit local pos: (-12.011, 0) ± (0.833531, 25.4496)
+TID Hit: 
+Hit local pos: (11.1311, 0) ± (0.772592, 25.4496)
+TID Hit: 
+Hit local pos: (-10.1129, 0) ± (0.702087, 25.4496)
+TID Hit: 
+Hit local pos: (13.9516, 0) ± (0.967959, 25.4496)
+TID Hit: 
+Hit local pos: (28.3145, 0) ± (2.02195, 31.9448)
+TEC Hit: 
+Hit local pos: (-19.858, 0) ± (1.17589, 33.2438)
+TEC Hit: 
+Hit local pos: (-15.0642, 0) ± (0.892337, 33.2438)
+TEC Hit: 
+Hit local pos: (-21.5584, 0) ± (1.35467, 42.511)
+TEC Hit: 
+Hit local pos: (29.2244, 0) ± (1.836, 42.511)
+TEC Hit: 
+Hit local pos: (-33.7499, 0) ± (2.12018, 42.511)
+TEC Hit: 
+Hit local pos: (34.9879, 0) ± (2.19792, 42.511)
+TEC Hit: 
+Hit local pos: (-44.9775, 0) ± (2.82528, 42.511)
+TEC Hit: 
+Hit local pos: (40.8746, 0) ± (2.56761, 42.511)
+TEC Hit: 
+Hit local pos: (-1.02036, 0) ± (0.0848141, 53.1416)
+TEC Hit: 
+Hit local pos: (7.65438, 0) ± (0.499457, 53.1416)
+TEC Hit: 
+Hit local pos: (8.3362, 0) ± (0.49926, 59.0963)
+TEC Hit: 
+Hit local pos: (20.4714, 0) ± (1.2219, 59.0963)
+TEC Hit: 
+Hit local pos: (33.2255, 0) ± (1.98233, 59.0963)
+PIXEL -> local x: -0.959578+-; local y: 7.43867
+PIXEL -> local x: -3.11115+-; local y: -29.2516
+PIXEL -> local x: 5.87896+-; local y: 3.25009
+PIXEL -> local x: -5.55935+-; local y: 18.7519
+STRIP -> local x: -26.7502; local y: 0
+STRIP -> local x: 29.9626; local y: 0
+STRIP -> local x: -12.011; local y: 0
+STRIP -> local x: 11.1311; local y: 0
+STRIP -> local x: -10.1129; local y: 0
+STRIP -> local x: 13.9516; local y: 0
+STRIP -> local x: 28.3145; local y: 0
+STRIP -> local x: -19.858; local y: 0
+STRIP -> local x: -15.0642; local y: 0
+STRIP -> local x: -21.5584; local y: 0
+STRIP -> local x: 29.2244; local y: 0
+STRIP -> local x: -33.7499; local y: 0
+STRIP -> local x: 34.9879; local y: 0
+STRIP -> local x: -44.9775; local y: 0
+STRIP -> local x: 40.8746; local y: 0
+STRIP -> local x: -1.02036; local y: 0
+STRIP -> local x: 7.65438; local y: 0
+STRIP -> local x: 8.3362; local y: 0
+STRIP -> local x: 20.4714; local y: 0
+STRIP -> local x: 33.2255; local y: 0
+ACTS detId before the fit 303063060; subDet = PixelBarrel
+ACTS detId before the fit 304140312; subDet = PixelBarrel
+ACTS detId before the fit 305221664; subDet = PixelBarrel
+ACTS detId before the fit 352744452; subDet = PixelEndcap
+ACTS detId before the fit 369124558; subDet = TIB
+ACTS detId before the fit 369124557; subDet = TIB
+ACTS detId before the fit 402672793; subDet = TID
+ACTS detId before the fit 402672794; subDet = TID
+ACTS detId before the fit 402674841; subDet = TID
+ACTS detId before the fit 402674842; subDet = TID
+ACTS detId before the fit 402677416; subDet = TID
+ACTS detId before the fit 470312324; subDet = TEC
+ACTS detId before the fit 470328708; subDet = TEC
+ACTS detId before the fit 470324397; subDet = TEC
+ACTS detId before the fit 470324398; subDet = TEC
+ACTS detId before the fit 470340781; subDet = TEC
+ACTS detId before the fit 470340782; subDet = TEC
+ACTS detId before the fit 470357165; subDet = TEC
+ACTS detId before the fit 470357166; subDet = TEC
+ACTS detId before the fit 470377924; subDet = TEC
+ACTS detId before the fit 470394308; subDet = TEC
+ACTS detId before the fit 470410724; subDet = TEC
+ACTS detId before the fit 470427108; subDet = TEC
+ACTS detId before the fit 470443492; subDet = TEC
+>>>>> Number of source links: 24
+>>>>> Number Rec Hits: 24
+Outliers: 0
+>>>> Fitted parameters:
+Fitted global position: x = 0.472706 y = -0.167869 z = -42.8098 t = 0
+Fitted direction (normalized): x = -0.360195 y = 0.106215 z = 0.926811
+loc0 = 0.0216803
+loc1 = -0.00222311
+phi = 2.85484
+theta = 0.384968
+q Over P = -0.0998248
+covariance = 
+ 0.000885158  4.48427e-05 -2.30753e-05  3.89229e-08 -6.01784e-05  1.67847e-06
+ 4.48427e-05   0.00271116 -7.39525e-07  9.23246e-06 -2.71037e-06  8.92169e-07
+-2.30753e-05 -7.39525e-07  7.15588e-07  2.77197e-10  2.14783e-06 -4.75264e-08
+ 3.89229e-08  9.23246e-06  2.77197e-10  3.83588e-08 -2.15858e-09   3.4423e-09
+-6.01784e-05 -2.71037e-06  2.14783e-06 -2.15858e-09  1.13877e-05 -1.40151e-07
+ 1.67847e-06  8.92169e-07 -4.75264e-08   3.4423e-09 -1.40151e-07      89875.5
+ThisID: 470427108
+ThisID: 470427112
+ThisID: 470394308
+ThisID: 470373580
+ThisID: 470357166
+ThisID: 470357164
+ThisID: 470357165
+ThisID: 470340782
+ThisID: 470340780
+ThisID: 470340781
+ThisID: 470324396
+ThisID: 470307980
+ThisID: 470312324
+ThisID: 402677416
+ThisID: 402677544
+ThisID: 402674842
+ThisID: 402674840
+ThisID: 402674841
+ThisID: 402672794
+ThisID: 402672792
+ThisID: 402672793
+ThisID: 402672280
+ThisID: 369124572
+ThisID: 369124557
+ThisID: 369124556
+ThisID: 369124558
+ThisID: 352744452
+ThisID: 305221664
+ThisID: 304140312
+ThisID: 303063060
+Inner detId Identified! With id: 303063060
+Rivet.Analysis.HiggsTemplateCrossSections: WARN  Unkown Higgs production mechanism. Cannot classify event. Classification for all events will most likely fail.
+################################################################################################ 
+===== Reco track associated to a Tracking Particle: =====
+px: 5.24535; py: 2.6037; pz: 8.1053; Energy: 10
+Vertex position -> x: 0.469016; y: -0.170024; z: -11.0456
+Eta: 1.1287; Phi: 0.46075
+Mass: 0.105658; Charge: -1; ParticleID: 13; Quality: 1
+==== Parameters of the RECO Track: ==== 
+4D Position (x, y, z, t): 0.47584 -0.202306 -11.1034 0 
+3D Direction: 0.524317 0.260604 0.810665
+qoverP: -0.100791
+covariance: [  1.89606e-06-4.59122e-09 2.85444e-07-1.09464e-06 6.27825e-08
+  -4.59122e-09 8.98297e-08 -7.1287e-09 5.04423e-08-7.10469e-07
+   2.85444e-07 -7.1287e-09 3.26656e-07 -1.5705e-06 9.28008e-08
+  -1.09464e-06 5.04423e-08 -1.5705e-06 8.67138e-06-6.62108e-07
+   6.27825e-08-7.10469e-07 9.28008e-08-6.62108e-07 7.04198e-06 ]
+chi2 / ndof = 0.448054
+Particle ID = 13
+PixelBarrel Hit: 
+Hit local pos: (-5.3849, 2.08321) ± (0.0222902, 0.0251)
+PixelBarrel Hit: 
+Hit local pos: (7.1783, 20.4713) ± (0.00611254, 0.0187682)
+PixelBarrel Hit: 
+Hit local pos: (8.00512, 15.4083) ± (0.05, 0.052868)
+PixelBarrel Hit: 
+Hit local pos: (-3.16525, 30.7168) ± (0.0125532, 0.0225794)
+PixelBarrel Hit: 
+Hit local pos: (5.33325, 26.9108) ± (0.01072, 0.0233511)
+TIB Hit: 
+Hit local pos: (29.4632, 0) ± (0.023094, 33.7418)
+TIB Hit: 
+Hit local pos: (-25.5036, 0) ± (0.023094, 33.7418)
+TIB Hit: 
+Hit local pos: (-15.2362, 0) ± (0.023094, 33.7418)
+TIB Hit: 
+Hit local pos: (10.2817, 0) ± (0.023094, 33.7418)
+ERROR: Invalid Hit. Skipping.
+ERROR: Invalid Hit. Skipping.
+TOB Hit: 
+Hit local pos: (12.014, 0) ± (0.0528276, 53.7323)
+TOB Hit: 
+Hit local pos: (-7.58311, 0) ± (0.0528276, 53.7323)
+TOB Hit: 
+Hit local pos: (16.2725, 0) ± (0.0528276, 53.7323)
+TOB Hit: 
+Hit local pos: (-22.2146, 0) ± (0.0528276, 53.7323)
+TEC Hit: 
+Hit local pos: (8.18788, 0) ± (0.490449, 59.0963)
+PIXEL -> local x: -5.3849+-; local y: 2.08321
+PIXEL -> local x: 7.1783+-; local y: 20.4713
+PIXEL -> local x: 8.00512+-; local y: 15.4083
+PIXEL -> local x: -3.16525+-; local y: 30.7168
+PIXEL -> local x: 5.33325+-; local y: 26.9108
+STRIP -> local x: 29.4632; local y: 0
+STRIP -> local x: -25.5036; local y: 0
+STRIP -> local x: -15.2362; local y: 0
+STRIP -> local x: 10.2817; local y: 0
+STRIP -> local x: 12.014; local y: 0
+STRIP -> local x: -7.58311; local y: 0
+STRIP -> local x: 16.2725; local y: 0
+STRIP -> local x: -22.2146; local y: 0
+STRIP -> local x: 8.18788; local y: 0
+ACTS detId before the fit 303042580; subDet = PixelBarrel
+ACTS detId before the fit 304095256; subDet = PixelBarrel
+ACTS detId before the fit 304099352; subDet = PixelBarrel
+ACTS detId before the fit 305152028; subDet = PixelBarrel
+ACTS detId before the fit 306204704; subDet = PixelBarrel
+ACTS detId before the fit 369124410; subDet = TIB
+ACTS detId before the fit 369124409; subDet = TIB
+ACTS detId before the fit 369125433; subDet = TIB
+ACTS detId before the fit 369125434; subDet = TIB
+ACTS detId before the fit 436232342; subDet = TOB
+ACTS detId before the fit 436232341; subDet = TOB
+ACTS detId before the fit 436248761; subDet = TOB
+ACTS detId before the fit 436248762; subDet = TOB
+ACTS detId before the fit 470307316; subDet = TEC
+>>>>> Number of source links: 14
+>>>>> Number Rec Hits: 16
+Outliers: 0
+>>>> Fitted parameters:
+Fitted global position: x = 0.469016 y = -0.170024 z = -11.0881 t = 0
+Fitted direction (normalized): x = 0.524629 y = 0.259993 z = 0.810659
+loc0 = 0.0153927
+loc1 = -0.0425198
+phi = 0.460102
+theta = 0.62552
+q Over P = -0.108378
+covariance = 
+ 0.000955424 -0.000129405 -1.81901e-05 -5.90224e-07 -3.62294e-05  9.47178e-07
+-0.000129405   0.00160798   2.1561e-06    9.772e-06  3.85432e-06  2.39232e-07
+-1.81901e-05   2.1561e-06  3.91338e-07  1.02839e-08  9.23026e-07 -1.73638e-08
+-5.90224e-07    9.772e-06  1.02839e-08  7.35507e-08  1.78914e-08  2.19523e-09
+-3.62294e-05  3.85432e-06  9.23026e-07  1.78914e-08  6.08478e-06 -1.67409e-08
+ 9.47178e-07  2.39232e-07 -1.73638e-08  2.19523e-09 -1.67409e-08      89875.5
+ThisID: 470307316
+Outer detId Identified! With id: 470307316
+ThisID: 470307312
+ThisID: 436265144
+ThisID: 436248762
+ThisID: 436248760
+ThisID: 436248761
+ThisID: 436232341
+ThisID: 436232340
+ThisID: 436232342
+ThisID: 369157196
+ThisID: 369140797
+ThisID: 369140796
+ThisID: 369140798
+ThisID: 369125434
+ThisID: 369125432
+ThisID: 369125433
+ThisID: 369124409
+ThisID: 369124408
+ThisID: 369124410
+ThisID: 369124392
+ThisID: 306204704
+ThisID: 305152028
+ThisID: 304099352
+ThisID: 304095256
+ThisID: 303042580
+Inner detId Identified! With id: 303042580
+>>>>> INNER AND OUTER DETID IDENTIFIED
+Rivet.Analysis.HiggsTemplateCrossSections: INFO   ====================================================== 
+Rivet.Analysis.HiggsTemplateCrossSections: INFO        Higgs Template X-Sec Categorization Tool          
+Rivet.Analysis.HiggsTemplateCrossSections: INFO                  Status Code Summary                     
+Rivet.Analysis.HiggsTemplateCrossSections: INFO   ====================================================== 
+Rivet.Analysis.HiggsTemplateCrossSections: INFO       >>>> All 0 events successfully categorized!
+Rivet.Analysis.HiggsTemplateCrossSections: INFO   ====================================================== 
+Rivet.Analysis.HiggsTemplateCrossSections: INFO   ====================================================== 
+
+The MCnet usage guidelines apply to Rivet: see http://www.montecarlonet.org/GUIDELINES
+Please acknowledge Rivet in results made using it, and cite https://arxiv.org/abs/1912.05451
+Thanks for using LHAPDF 6.4.0. Please make sure to cite the paper:
+  Eur.Phys.J. C75 (2015) 3, 132  (http://arxiv.org/abs/1412.7420)
+  KORB: rho/rhop -> pi-pi0 mixing:
+  KORB: rho   =  0.769900024      0.151199996    
+  KORB: rhop  =   1.37000000      0.509999990     -0.109999999    
+  KORB: K*/K*prime -> Kpi mixing:
+  KORB: kstp  =   1.70000005      0.234999999      -3.79999988E-02
+  KORB: a1/a1prime -> 3pi, KKpi mixing:
+  KORB: a1    =   1.27499998      0.699999988    
+  KORB: a1prim=   1.46099997      0.250000000       0.00000000    
+  KORB: K1A/K1B -> Kpipi mixing:
+  KORB: K1A   =   1.26999998       9.00000036E-02   1.00000000    
+  KORB: K1B   =   1.40199995      0.173999995      0.800000012    
+  KORB: rho/rhop/rhopp -> 4pi mixing:
+  KORB: rho   =  0.769900024      0.151199996    
+  KORB: rhopp =   1.46500003      0.310000002     -0.109999999    
+  KORB: rhoppp=   1.70000005      0.234999999     -0.109999999    
+  KORB: 3PI-PI0 PARAMS:   0.00000000      0.124200001      0.160400003      0.271100014      0.444299996    
+  KORB: PI-3PI0 PARAMS:   0.00000000       1.00000000    
+  In F3pi: add (rho-pi S-wave) + (rhop-pi S-wave) +
+               (rho-pi D-wave) + (rhop-pi D-wave) +
+    (f2 pi D-wave) + (sigmapi S-wave) + (f0pi S-wave)

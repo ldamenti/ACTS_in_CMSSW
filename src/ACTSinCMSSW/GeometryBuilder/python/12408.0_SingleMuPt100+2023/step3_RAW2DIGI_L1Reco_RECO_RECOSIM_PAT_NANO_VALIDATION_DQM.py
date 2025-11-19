@@ -9,6 +9,8 @@ from Configuration.Eras.Era_Run3_2023_cff import Run3_2023
 
 process = cms.Process('RECO',Run3_2023)
 
+folder = 'ACTS_files/'
+
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
@@ -86,7 +88,8 @@ process.RECOSIMoutput = cms.OutputModule("PoolOutputModule",
         dataTier = cms.untracked.string('GEN-SIM-RECO'),
         filterName = cms.untracked.string('')
     ),
-    fileName = cms.untracked.string('file:step3.root'),
+    fileName = cms.untracked.string(f'file:{folder}step3.root'),
+    #fileName = cms.untracked.string('root://eosuser.cern.ch//eos/user/l/ldamenti/runTheMatrix_files/step3.root'),
     outputCommands = process.RECOSIMEventContent.outputCommands,
     splitLevel = cms.untracked.int32(0)
 )
@@ -101,7 +104,7 @@ process.MINIAODSIMoutput = cms.OutputModule("PoolOutputModule",
     dropMetaData = cms.untracked.string('ALL'),
     eventAutoFlushCompressedSize = cms.untracked.int32(-900),
     fastCloning = cms.untracked.bool(False),
-    fileName = cms.untracked.string('file:step3_inMINIAODSIM.root'),
+    fileName = cms.untracked.string(f'file:{folder}step3_inMINIAODSIM.root'),
     outputCommands = process.MINIAODSIMEventContent.outputCommands,
     overrideBranchesSplitLevel = cms.untracked.VPSet(
         cms.untracked.PSet(
@@ -168,7 +171,7 @@ process.NANOEDMAODSIMoutput = cms.OutputModule("PoolOutputModule",
         dataTier = cms.untracked.string('NANOAODSIM'),
         filterName = cms.untracked.string('')
     ),
-    fileName = cms.untracked.string('file:step3_inNANOEDMAODSIM.root'),
+    fileName = cms.untracked.string(f'file:{folder}step3_inNANOEDMAODSIM.root'),
     outputCommands = process.NANOAODSIMEventContent.outputCommands
 )
 
@@ -177,7 +180,7 @@ process.DQMoutput = cms.OutputModule("DQMRootOutputModule",
         dataTier = cms.untracked.string('DQMIO'),
         filterName = cms.untracked.string('')
     ),
-    fileName = cms.untracked.string('file:step3_inDQM.root'),
+    fileName = cms.untracked.string(f'file:{folder}step3_inDQM.root'),
     outputCommands = process.DQMEventContent.outputCommands,
     splitLevel = cms.untracked.int32(0)
 )
@@ -253,9 +256,10 @@ process.trackinGeoProducer = cms.ESProducer("ACTSTrackingGeometryProducer",
     outputSvgFile  = cms.untracked.string("testSvg_output.svg"),
     # Option to map the material from a JSON file
     mapMaterial    = cms.untracked.bool(True),
-    MaterialMaps   = cms.untracked.string("../MaterialMaps.json")
+    MaterialMaps   = cms.untracked.string("../MaterialMaps_WithExtraLayers.json")
 )
 
+# ===== Call the constructor of the Tracking Geometry =====
 process.get = cms.EDAnalyzer("EventSetupRecordDataGetter",
     toGet = cms.VPSet(cms.PSet(
         record = cms.string('ACTSTrackerGeometryRecord'),
@@ -264,7 +268,8 @@ process.get = cms.EDAnalyzer("EventSetupRecordDataGetter",
     verbose = cms.untracked.bool(True))
 
 
-process.tracksRefit = cms.EDProducer("RefitAnalyzer",
+# ===== Perform the refit using ACTS Producer =====
+process.tracksACTSRefit = cms.EDProducer("ACTSRefitTracksProducer",
     trackLabels = cms.VInputTag("generalTracks"),
     trackAssociator = cms.untracked.InputTag("quickTrackAssociatorByHits"),  
     trackingParticles = cms.InputTag("mix", "MergedTrackTruth"),
@@ -287,25 +292,53 @@ process.tracksRefit = cms.EDProducer("RefitAnalyzer",
     maxPhiTP = cms.double(3.5)
 )
 
+# ===== Create the output file to give to the DQM Step =====
 process.ACTSTrackingMonitor = process.TrackMon.clone(
-    allTrackProducer = cms.InputTag("TracksColl"),
-    TrackProducer    = cms.InputTag("TracksColl")
+    allTrackProducer = cms.InputTag("tracksACTSRefit"),
+    TrackProducer    = cms.InputTag("tracksACTSRefit"),
+    FolderName       = cms.string('Tracking/ACTSTrackParameters'),
+    doGeneralPropertiesPlots = cms.bool(True)
 )
 
-#process.p = cms.Path(process.tracksRefit)
+process.ACTSMonitorTrackResiduals = process.MonitorTrackResiduals.clone(
+    Tracks = cms.InputTag("tracksACTSRefit"),
+    OutputFileName = cms.string('test_monitortracksACTS.root'),
+    trajectoryInput = cms.string('')
+)
 
 # ====== Paths ======
 process.p = cms.Sequence(
     process.MeasurementTrackerEvent *
     process.tpClusterProducer *
     process.quickTrackAssociatorByHits *
-    process.tracksRefit
+    process.tracksACTSRefit
 )
 process.Myrefit_step = cms.Path(process.p)
-process.MyTrackingPath = cms.EndPath(process.ACTSTrackingMonitor)
+process.MyTrackingDQMPath = cms.Path(process.ACTSTrackingMonitor)
+process.MyResidualPath = cms.Path(process.ACTSMonitorTrackResiduals)
 
 # Schedule definition
-process.schedule = cms.Schedule(process.raw2digi_step,process.L1Reco_step,process.reconstruction_step,process.recosim_step,process.Flag_HBHENoiseFilter,process.Flag_HBHENoiseIsoFilter,process.Flag_CSCTightHaloFilter,process.Flag_CSCTightHaloTrkMuUnvetoFilter,process.Flag_CSCTightHalo2015Filter,process.Flag_globalTightHalo2016Filter,process.Flag_globalSuperTightHalo2016Filter,process.Flag_HcalStripHaloFilter,process.Flag_hcalLaserEventFilter,process.Flag_EcalDeadCellTriggerPrimitiveFilter,process.Flag_EcalDeadCellBoundaryEnergyFilter,process.Flag_ecalBadCalibFilter,process.Flag_goodVertices,process.Flag_eeBadScFilter,process.Flag_ecalLaserCorrFilter,process.Flag_trkPOGFilters,process.Flag_chargedHadronTrackResolutionFilter,process.Flag_muonBadTrackFilter,process.Flag_BadChargedCandidateFilter,process.Flag_BadPFMuonFilter,process.Flag_BadPFMuonDzFilter,process.Flag_hfNoisyHitsFilter,process.Flag_BadChargedCandidateSummer16Filter,process.Flag_BadPFMuonSummer16Filter,process.Flag_trkPOG_manystripclus53X,process.Flag_trkPOG_toomanystripclus53X,process.Flag_trkPOG_logErrorTooManyClusters,process.nanoAOD_step,process.prevalidation_step,process.prevalidation_step1,process.validation_step,process.validation_step1,process.dqmoffline_step,process.dqmoffline_1_step,process.dqmoffline_2_step,process.dqmofflineOnPAT_step,process.dqmofflineOnPAT_1_step,process.dqmofflineOnPAT_2_step,process.RECOSIMoutput_step,process.MINIAODSIMoutput_step,process.NANOEDMAODSIMoutput_step,process.DQMoutput_step, process.Myrefit_step, process.MyTrackingPath)
+process.schedule = cms.Schedule(process.raw2digi_step,process.L1Reco_step,
+                                process.reconstruction_step,process.recosim_step,
+                                process.Flag_HBHENoiseFilter,process.Flag_HBHENoiseIsoFilter,
+                                process.Flag_CSCTightHaloFilter,process.Flag_CSCTightHaloTrkMuUnvetoFilter,
+                                process.Flag_CSCTightHalo2015Filter,process.Flag_globalTightHalo2016Filter,
+                                process.Flag_globalSuperTightHalo2016Filter,process.Flag_HcalStripHaloFilter,
+                                process.Flag_hcalLaserEventFilter,process.Flag_EcalDeadCellTriggerPrimitiveFilter,
+                                process.Flag_EcalDeadCellBoundaryEnergyFilter,process.Flag_ecalBadCalibFilter,
+                                process.Flag_goodVertices,process.Flag_eeBadScFilter,process.Flag_ecalLaserCorrFilter,
+                                process.Flag_trkPOGFilters,process.Flag_chargedHadronTrackResolutionFilter,
+                                process.Flag_muonBadTrackFilter,process.Flag_BadChargedCandidateFilter,
+                                process.Flag_BadPFMuonFilter,process.Flag_BadPFMuonDzFilter,
+                                process.Flag_hfNoisyHitsFilter,process.Flag_BadChargedCandidateSummer16Filter,
+                                process.Flag_BadPFMuonSummer16Filter,process.Flag_trkPOG_manystripclus53X,
+                                process.Flag_trkPOG_toomanystripclus53X,process.Flag_trkPOG_logErrorTooManyClusters,
+                                process.nanoAOD_step,process.prevalidation_step,process.prevalidation_step1,
+                                process.validation_step,process.validation_step1,process.dqmoffline_step,
+                                process.dqmoffline_1_step,process.dqmoffline_2_step,process.dqmofflineOnPAT_step,
+                                process.dqmofflineOnPAT_1_step,process.dqmofflineOnPAT_2_step,process.RECOSIMoutput_step,
+                                process.MINIAODSIMoutput_step,process.NANOEDMAODSIMoutput_step,process.DQMoutput_step,
+                                process.Myrefit_step, process.MyTrackingDQMPath, process.MyResidualPath)
 process.schedule.associate(process.patTask)
 from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
 associatePatAlgosToolsTask(process)

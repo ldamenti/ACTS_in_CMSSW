@@ -1,0 +1,44 @@
+
+
+
+                                     ACTS detId before the fit 470181840
+ACTS detId after the fit: 470161062  ACTS detId before the fit 470161062
+ACTS detId after the fit: 470161060
+ACTS detId after the fit: 470161061  ACTS detId before the fit 470161061
+ACTS detId after the fit: 470144678  ACTS detId before the fit 470144678
+ACTS detId after the fit: 470144676
+ACTS detId after the fit: 470144677  ACTS detId before the fit 470144677
+ACTS detId after the fit: 470128292
+                                     ACTS detId before the fit 470128293
+ACTS detId after the fit: 470132624  ACTS detId before the fit 470132624
+ACTS detId after the fit: 470111876
+ACTS detId after the fit: 470116240
+                                     ACTS detId before the fit 470095492
+                                     ACTS detId before the fit 470099820
+ACTS detId after the fit: 470079076  ACTS detId before the fit 470079076
+ACTS detId after the fit: 470083436
+ACTS detId after the fit: 470062692
+ACTS detId after the fit: 470046276
+ACTS detId after the fit: 470050632
+                                     ACTS detId before the fit 470046308
+                                     ACTS detId before the fit 470050633
+                                     ACTS detId before the fit 470050634
+ACTS detId after the fit: 402668710  ACTS detId before the fit 402668710
+ACTS detId after the fit: 402668708
+ACTS detId after the fit: 402668709  ACTS detId before the fit 402668709
+ACTS detId after the fit: 402668198  ACTS detId before the fit 402668198
+ACTS detId after the fit: 402668196
+ACTS detId after the fit: 402668197  ACTS detId before the fit 402668197
+ACTS detId after the fit: 402666150  ACTS detId before the fit 402666150
+ACTS detId after the fit: 402666148
+ACTS detId after the fit: 402666149  ACTS detId before the fit 402666149
+ACTS detId after the fit: 402664100
+                                     ACTS detId before the fit 402664102
+                                     ACTS detId before the fit 402664101
+ACTS detId after the fit: 344912900  ACTS detId before the fit 344912900
+ACTS detId after the fit: 344650756  ACTS detId before the fit 344650756
+ACTS detId after the fit: 344262660  ACTS detId before the fit 344262660
+ACTS detId after the fit: 344389636  ACTS detId before the fit 344389636
+ACTS detId after the fit: 344388612  ACTS detId before the fit 344388612
+ACTS detId after the fit: 304168968  ACTS detId before the fit 304168968
+ACTS detId after the fit: 303075340  ACTS detId before the fit 303075340

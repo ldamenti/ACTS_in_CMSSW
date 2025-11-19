@@ -1,0 +1,47 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                    ACTS detId before the fit 470079732
+ACTS detId after the fit 470063348  ACTS detId before the fit 470063348
+ACTS detId after the fit 470063344
+                                    ACTS detId before the fit 470046924
+ACTS detId after the fit 470051012  ACTS detId before the fit 470051012
+ACTS detId after the fit 436245914  ACTS detId before the fit 436245914
+ACTS detId after the fit 436245912
+ACTS detId after the fit 436245913  ACTS detId before the fit 436245913
+ACTS detId after the fit 436229337  ACTS detId before the fit 436229337
+ACTS detId after the fit 436229336
+ACTS detId after the fit 436229338  ACTS detId before the fit 436229338
+                                    ACTS detId before the fit 436229369
+                                    ACTS detId before the fit 402665292
+ACTS detId after the fit 369154732  ACTS detId before the fit 369154732
+ACTS detId after the fit 369138238  ACTS detId before the fit 369138238
+ACTS detId after the fit 369138236
+ACTS detId after the fit 369138237  ACTS detId before the fit 369138237
+ACTS detId after the fit 369121738  ACTS detId before the fit 369121738
+ACTS detId after the fit 369121736
+ACTS detId after the fit 369121737  ACTS detId before the fit 369121737
+ACTS detId after the fit 369121722
+ACTS detId after the fit 369121720
+ACTS detId after the fit 369121721  ACTS detId before the fit 369121721
+ACTS detId after the fit 306421764  ACTS detId before the fit 306421764
+ACTS detId after the fit 305299464  ACTS detId before the fit 305299464
+ACTS detId after the fit 304193548  ACTS detId before the fit 304193548
+ACTS detId after the fit 303083536  ACTS detId before the fit 303083536

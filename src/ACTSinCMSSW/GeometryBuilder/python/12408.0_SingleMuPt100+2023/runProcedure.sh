@@ -1,0 +1,5 @@
+cmsRun step3_RAW2DIGI_L1Reco_RECO_RECOSIM_PAT_NANO_VALIDATION_DQM.py
+
+cmsRun step4_HARVESTING.py
+
+python3 DQM_plotter.py

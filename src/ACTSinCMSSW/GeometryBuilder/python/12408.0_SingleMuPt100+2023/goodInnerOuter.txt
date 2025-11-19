@@ -1,0 +1,53 @@
+
+
+ACTS detId after the fit 470307316 ACTS detId before the fit 470307316; subDet = TEC
+ACTS detId after the fit 470307312
+ACTS detId after the fit 436265144
+ACTS detId after the fit 436248762 ACTS detId before the fit 436248762; subDet = TOB
+ACTS detId after the fit 436248760
+ACTS detId after the fit 436248761 ACTS detId before the fit 436248761; subDet = TOB
+ACTS detId after the fit 436232341 ACTS detId before the fit 436232341; subDet = TOB
+ACTS detId after the fit 436232340
+ACTS detId after the fit 436232342 ACTS detId before the fit 436232342; subDet = TOB
+ACTS detId after the fit 369157196
+ACTS detId after the fit 369140797
+ACTS detId after the fit 369140796
+ACTS detId after the fit 369140798
+ACTS detId after the fit 369125434 ACTS detId before the fit 369125434; subDet = TIB
+ACTS detId after the fit 369125432
+ACTS detId after the fit 369125433 ACTS detId before the fit 369125433; subDet = TIB
+ACTS detId after the fit 369124409 ACTS detId before the fit 369124409; subDet = TIB
+ACTS detId after the fit 369124408
+ACTS detId after the fit 369124410 ACTS detId before the fit 369124410; subDet = TIB
+ACTS detId after the fit 369124392
+ACTS detId after the fit 306204704 ACTS detId before the fit 306204704; subDet = PixelBarrel
+ACTS detId after the fit 305152028 ACTS detId before the fit 305152028; subDet = PixelBarrel
+ACTS detId after the fit 304099352 ACTS detId before the fit 304099352; subDet = PixelBarrel
+ACTS detId after the fit 304095256 ACTS detId before the fit 304095256; subDet = PixelBarrel
+ACTS detId after the fit 303042580 ACTS detId before the fit 303042580; subDet = PixelBarrel
+
+
+ACTS detId after the fit 470082536 ACTS detId before the fit 470082536; subDet = TEC
+                                   ACTS detId before the fit 470066152; subDet = TEC
+ACTS detId after the fit 470049736 ACTS detId before the fit 470049736; subDet = TEC
+ACTS detId after the fit 470049732
+ACTS detId after the fit 436244922 ACTS detId before the fit 436244922; subDet = TOB
+ACTS detId after the fit 436244920
+ACTS detId after the fit 436244921 ACTS detId before the fit 436244921; subDet = TOB
+ACTS detId after the fit 436228473 ACTS detId before the fit 436228473; subDet = TOB
+ACTS detId after the fit 436228472
+ACTS detId after the fit 436228474 ACTS detId before the fit 436228474; subDet = TOB
+                                   ACTS detId before the fit 436228470; subDet = TOB
+ACTS detId after the fit 402665240 ACTS detId before the fit 402665240; subDet = TID
+ACTS detId after the fit 369154252 ACTS detId before the fit 369154252; subDet = TIB
+ACTS detId after the fit 369137838 ACTS detId before the fit 369137838; subDet = TIB
+ACTS detId after the fit 369137836
+ACTS detId after the fit 369137837 ACTS detId before the fit 369137837; subDet = TIB
+ACTS detId after the fit 369121418 ACTS detId before the fit 369121418; subDet = TIB
+ACTS detId after the fit 369121416
+ACTS detId after the fit 369121417 ACTS detId before the fit 369121417; subDet = TIB
+ACTS detId after the fit 306253828 ACTS detId before the fit 306253828; subDet = PixelBarrel
+ACTS detId after the fit 305184776 ACTS detId before the fit 305184776; subDet = PixelBarrel
+ACTS detId after the fit 304115724 ACTS detId before the fit 304115724; subDet = PixelBarrel
+ACTS detId after the fit 304119820 ACTS detId before the fit 304119820; subDet = PixelBarrel
+ACTS detId after the fit 303054864 ACTS detId before the fit 303054864; subDet = PixelBarrel

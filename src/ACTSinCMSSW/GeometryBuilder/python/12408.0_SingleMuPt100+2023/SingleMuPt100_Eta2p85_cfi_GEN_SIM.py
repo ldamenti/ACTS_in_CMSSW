@@ -26,7 +26,7 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(10),
+    input = cms.untracked.int32(1000),
     output = cms.optional.untracked.allowed(cms.int32,cms.PSet)
 )
 
@@ -96,24 +96,51 @@ process.genstepfilter.triggerConditions=cms.vstring("generation_step")
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase1_2023_realistic', '')
 
-process.generator = cms.EDFilter("Pythia8PtGun",
+# process.generator = cms.EDFilter("Pythia8PtGun",
+#     PGunParameters = cms.PSet(
+#         AddAntiParticle = cms.bool(False),
+#         MaxEta = cms.double(2.85),
+#         MaxPhi = cms.double(3.14159265359),
+#         MaxPt = cms.double(100.01),
+#         MinEta = cms.double(-2.85),
+#         MinPhi = cms.double(-3.14159265359),
+#         MinPt = cms.double(99.99),
+#         ParticleID = cms.vint32(13)
+#     ),
+#     PythiaParameters = cms.PSet(
+#         parameterSets = cms.vstring()
+#     ),
+#     Verbosity = cms.untracked.int32(0),
+#     firstRun = cms.untracked.uint32(1),
+#     psethack = cms.string('single mu pt 100')
+# )
+
+process.generator = cms.EDFilter("Pythia8EGun",
     PGunParameters = cms.PSet(
-        AddAntiParticle = cms.bool(True),
-        MaxEta = cms.double(2.85),
-        MaxPhi = cms.double(3.14159265359),
-        MaxPt = cms.double(100.01),
-        MinEta = cms.double(-2.85),
-        MinPhi = cms.double(-3.14159265359),
-        MinPt = cms.double(99.99),
-        ParticleID = cms.vint32(-13)
+        AddAntiParticle = cms.bool(False),     
+        MinEta = cms.double(-2.5),           # -2.5    
+        MaxEta = cms.double(2.5),            # 2.5
+        MinPhi = cms.double(-3.14159),
+        MaxPhi = cms.double(3.14159),
+        MinE = cms.double(10.0),               
+        MaxE = cms.double(10.0),
+        # MaxPt  = cms.double(100.0),           
+        # MinPt  = cms.double(100.0),           
+        ParticleID = cms.vint32(13)           
     ),
     PythiaParameters = cms.PSet(
-        parameterSets = cms.vstring()
+        pythia8CommonSettings = cms.vstring(
+            'PartonLevel:FSR = off',        
+            'HadronLevel:Decay = off',      
+            'PartonLevel:ISR = off'        
+        ),
+        parameterSets = cms.vstring('pythia8CommonSettings')
     ),
     Verbosity = cms.untracked.int32(0),
     firstRun = cms.untracked.uint32(1),
-    psethack = cms.string('single mu pt 100')
+    psethack = cms.string('single mu- E 10')
 )
+
 
 
 # Path and EndPath definitions

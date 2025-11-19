@@ -97,6 +97,11 @@ const std::array<Acts::AxisDirection, 2UL> casts{Acts::AxisDirection::AxisZ, Act
 
 using DetElVect = std::vector<std::shared_ptr<Acts::CMSDetectorElement>>;
 
+struct TrackingGeometryWithDetEls {
+    DetElVect detElements;
+    std::shared_ptr<Acts::TrackingGeometry> trackingGeometry;
+};
+
 // ##################### Decorator Methods #################################################    
 
 struct MaterialSurfaceSelector {
@@ -282,18 +287,26 @@ public:
   //void produce(const ACTSTrackerGeometryRecord& iRecord);
 
 private:
-  edm::ESGetToken<Acts::TrackingGeometry, ACTSTrackerGeometryRecord> trackerGeomToken_;//ACTSTrackerGeometryRecord
+  edm::ESGetToken<TrackingGeometryWithDetEls, ACTSTrackerGeometryRecord> ACTStrkGeomInfoToken_;  
   int Nevents_, Tracks_perEv_;
 };
 
 MappedMaterialValidator::MappedMaterialValidator(const edm::ParameterSet& ps)
-    : trackerGeomToken_(esConsumes()),
+    : ACTStrkGeomInfoToken_(esConsumes<TrackingGeometryWithDetEls, ACTSTrackerGeometryRecord>()),
       Nevents_(ps.getUntrackedParameter<int>("Nevents")),
       Tracks_perEv_(ps.getUntrackedParameter<int>("Ntracks")) {}
 
 void MappedMaterialValidator::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) { 
 //void MappedMaterialValidator::produce(const ACTSTrackerGeometryRecord& iRecord) { 
-  const auto& trackingGeometry = iSetup.getData(trackerGeomToken_);
+  // Get the Tracking Geometry and check if it's valid
+  const auto& trkGeo_and_DetEls = iSetup.getData(ACTStrkGeomInfoToken_);
+  DetElVect detEls = trkGeo_and_DetEls.detElements;
+  std::shared_ptr<Acts::TrackingGeometry> trackingGeometry = trkGeo_and_DetEls.trackingGeometry;
+  if (!trackingGeometry) {
+      edm::LogError("ACTSRefitTracksProducer") << "ACTS TrackerGeometry is nullptr!";
+      return;  
+  }
+  //const auto& trackingGeometry = iSetup.getData(trackerGeomToken_); //<- Old
   //const TrackerGeometry& trackingGeometry = iRecord.get(trackerGeomToken_);
 
   // Validate the mapped material
@@ -306,7 +319,7 @@ void MappedMaterialValidator::produce(edm::Event& iEvent, const edm::EventSetup&
   // The MateriaValidator needs a config (MatVal_cfg) which needs a MaterialValidater which needs a IntersectionMaterialAssigner
   // NOTE: we define the IntersectionMaterialAssigner using the same cfg (Mat_Assigner_cfg) used for the mapping
   MaterialSurfaceSelector sel;
-  trackingGeometry.visitSurfaces(sel, false);
+  trackingGeometry->visitSurfaces(sel, false);
   std::vector<const Acts::Surface*> map_surfaces = sel.surfaces;
 
   Acts::IntersectionMaterialAssigner::Config Mat_Assigner_cfg_forValidation;

@@ -4,8 +4,8 @@
 #include "Acts/Geometry/DetectorElementBase.hpp"
 
 // ROOT includes for serialization
-#include "TObject.h"
-#include "Rtypes.h"
+// #include "TObject.h"
+// #include "Rtypes.h"
 
 #include <nlohmann/json.hpp>
 #include <map>
@@ -25,14 +25,9 @@ struct CMSDetectorElementData {
 class CMSDetectorElement : public DetectorElementBase {
  public:
 
-  CMSDetectorElement() = default;                      // default ctor
-
-  explicit CMSDetectorElement(const CMSDetectorElementData& det_data);
-
-  virtual ~CMSDetectorElement();
+  CMSDetectorElement(const CMSDetectorElementData& det_data);
 
   Surface &surface() override;
-
   const Surface &surface() const override;
 
   double thickness() const override;

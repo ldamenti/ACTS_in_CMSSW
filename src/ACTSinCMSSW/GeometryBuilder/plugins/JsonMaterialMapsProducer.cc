@@ -96,6 +96,11 @@ using KdtSurfacesDim2Bin100 = Acts::Experimental::KdtSurfaces<2u, 100u>;
 const std::array<Acts::AxisDirection, 2UL> casts{Acts::AxisDirection::AxisZ, Acts::AxisDirection::AxisR};
 
 using DetElVect = std::vector<std::shared_ptr<Acts::CMSDetectorElement>>;
+
+struct TrackingGeometryWithDetEls {
+    DetElVect detElements;
+    std::shared_ptr<Acts::TrackingGeometry> trackingGeometry;
+};
 // ############################## MATERIAL METHODS ##############################
 
 struct MaterialConfig {
@@ -227,20 +232,28 @@ public:
   //void produce(const ACTSTrackerGeometryRecord& iRecord);
 
 private:
-  edm::ESGetToken<Acts::TrackingGeometry, ACTSTrackerGeometryRecord> trackerGeomToken_;//ACTSTrackerGeometryRecord
+  edm::ESGetToken<TrackingGeometryWithDetEls, ACTSTrackerGeometryRecord> ACTStrkGeomInfoToken_;  
   std::string inputFile_, outputFile_;
   int Nevents_;
 };
 
 JsonMaterialMapsProducer::JsonMaterialMapsProducer(const edm::ParameterSet& ps)
-    : trackerGeomToken_(esConsumes()),
+    : ACTStrkGeomInfoToken_(esConsumes<TrackingGeometryWithDetEls, ACTSTrackerGeometryRecord>()),
       inputFile_(ps.getUntrackedParameter<std::string>("G4InputFile")),
       outputFile_(ps.getUntrackedParameter<std::string>("OutputFile")),
       Nevents_(ps.getUntrackedParameter<int>("Nevents")){}
 
 void JsonMaterialMapsProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) { 
 //void JsonMaterialMapsProducer::produce(const ACTSTrackerGeometryRecord& iRecord) { 
-  const auto& trackingGeometry = iSetup.getData(trackerGeomToken_);
+  // Get the Tracking Geometry and check if it's valid
+  const auto& trkGeo_and_DetEls = iSetup.getData(ACTStrkGeomInfoToken_);
+  DetElVect detEls = trkGeo_and_DetEls.detElements;
+  std::shared_ptr<Acts::TrackingGeometry> trackingGeometry = trkGeo_and_DetEls.trackingGeometry;
+  if (!trackingGeometry) {
+      edm::LogError("ACTSRefitTracksProducer") << "ACTS TrackerGeometry is nullptr!";
+      return;  
+  }
+  // const auto& trackingGeometry = iSetup.getData(trackerGeomToken_); // <- old
   //const TrackerGeometry& trackingGeometry = iRecord.get(trackerGeomToken_);
 
   std::cout << ">>>>> Create Material Maps <<<<<" << std::endl;
@@ -256,7 +269,7 @@ void JsonMaterialMapsProducer::produce(edm::Event& iEvent, const edm::EventSetup
 
   // Collect the material surfaces from the trackingGeometry:
   MaterialSurfaceSelector selector;
-  trackingGeometry.visitSurfaces(selector, false);
+  trackingGeometry->visitSurfaces(selector, false);
   std::vector<const Acts::Surface*> map_surf = selector.surfaces;
 
   // Define the Material mapper -> (1) Accumulater and (2) Assigner

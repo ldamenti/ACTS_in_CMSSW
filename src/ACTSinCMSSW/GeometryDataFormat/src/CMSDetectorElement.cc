@@ -5,7 +5,7 @@
 #include "ActsPlugins/Json/SurfaceJsonConverter.hpp"
 #include "Acts/Surfaces/Surface.hpp" 
 
-ClassImp(Acts::CMSDetectorElement)
+//ClassImp(Acts::CMSDetectorElement)
 
 namespace Acts {
 
@@ -16,10 +16,8 @@ CMSDetectorElement::CMSDetectorElement(const CMSDetectorElementData& det_data)
     m_detID(det_data.detID_),
     m_subDetector(det_data.subDetector_)
 {
-    if (m_surface) m_surface->assignDetectorElement(*this);
+    m_surface->assignDetectorElement(*this);
 }
-
-CMSDetectorElement::~CMSDetectorElement() = default;
 
 const Surface &CMSDetectorElement::surface() const {
   if (!m_surface) {

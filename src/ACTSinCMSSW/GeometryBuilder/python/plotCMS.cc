@@ -49,9 +49,12 @@ int plotCMS (std::initializer_list<std::string> list){
     //hist->GetXaxis()->SetTitle("g_x");
     //hist->GetYaxis()->SetTitle("g_y");
 
-    can->SaveAs("Propagation_test_noB.pdf");
-    can->SaveAs("Propagation_test_noB.root");
+    // can->SaveAs("Propagation_test_noB.pdf");
+    // can->SaveAs("Propagation_test_noB.root");
     //can->SaveAs("MaterialPlot_test.root");
+
+    can->SaveAs("Propagation_test_Bdebug.pdf");
+    can->SaveAs("Propagation_test_Bdebug.root");
 
     return 0;
 }

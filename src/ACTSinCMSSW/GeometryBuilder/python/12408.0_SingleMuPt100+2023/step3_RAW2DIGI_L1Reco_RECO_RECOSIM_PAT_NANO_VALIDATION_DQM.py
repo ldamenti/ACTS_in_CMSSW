@@ -5,9 +5,16 @@
 # with command line options: step3 -s RAW2DIGI,L1Reco,RECO,RECOSIM,PAT,NANO,VALIDATION:@standardValidationNoHLT+@miniAODValidation,DQM:@standardDQMFakeHLT+@miniAODDQM+@nanoAODDQM --conditions auto:phase1_2023_realistic --datatier GEN-SIM-RECO,MINIAODSIM,NANOAODSIM,DQMIO -n 100 --eventcontent RECOSIM,MINIAODSIM,NANOEDMAODSIM,DQM --geometry DB:Extended --era Run3_2023 --no_exec --filein file:step2.root --fileout file:step3.root
 import FWCore.ParameterSet.Config as cms
 
-from Configuration.Eras.Era_Run3_2023_cff import Run3_2023
+# from Configuration.Eras.Era_Run3_2023_cff import Run3_2023
+# process = cms.Process('RECO',Run3_2023)
+from Configuration.Eras.Era_Run3_noMkFit_cff import Run3_noMkFit
+process = cms.Process('RECO',Run3_noMkFit)
 
-process = cms.Process('RECO',Run3_2023)
+#########################################
+# GENERATOR INPUT FILE                  #
+globalPath = '/eos/user/l/ldamenti/DatasetFarm_files/'
+filename = 'step2_Np10k_E10GeV_muNeg.root'
+#########################################
 
 folder = 'ACTS_files/'
 
@@ -32,13 +39,14 @@ process.load('DQMOffline.Configuration.DQMOfflineMC_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(100),
+    input = cms.untracked.int32(1000),
     output = cms.optional.untracked.allowed(cms.int32,cms.PSet)
 )
 
 # Input source
 process.source = cms.Source("PoolSource",
-    fileNames = cms.untracked.vstring('file:step2.root'),
+    #fileNames = cms.untracked.vstring('file:step2.root'),
+    fileNames = cms.untracked.vstring('root://eosuser.cern.ch/' + globalPath + filename),
     secondaryFileNames = cms.untracked.vstring()
 )
 
@@ -247,12 +255,12 @@ process.DQMoutput_step = cms.EndPath(process.DQMoutput)
 # ===== Construct the ACTS Tracking Geometry =====
 process.trackinGeoProducer = cms.ESProducer("ACTSTrackingGeometryProducer", 
     # Options to save the detector elements in an OBJ file
-    saveObjfile    = cms.untracked.bool(True),
+    saveObjfile    = cms.untracked.bool(False),
     outputObjFile  = cms.untracked.string("testSlice.obj"),
     rangeZ         = cms.untracked.vdouble(-1000, 1000),  # Min, Max (mm)
     rangeR         = cms.untracked.vdouble(0, 1200),      # Min, Max (mm) 
     # Options to save the Tracker blueprint on an SVG file
-    saveSvgfile    = cms.untracked.bool(True),
+    saveSvgfile    = cms.untracked.bool(False),
     outputSvgFile  = cms.untracked.string("testSvg_output.svg"),
     # Option to map the material from a JSON file
     mapMaterial    = cms.untracked.bool(True),
@@ -274,50 +282,103 @@ process.tracksACTSRefit = cms.EDProducer("ACTSRefitTracksProducer",
     trackAssociator = cms.untracked.InputTag("quickTrackAssociatorByHits"),  
     trackingParticles = cms.InputTag("mix", "MergedTrackTruth"),
 
-    # TrackingParticleSelector parameters
-    ptMinTP = cms.double(1.0),
-    ptMaxTP = cms.double(1000.0),
-    minRapidityTP = cms.double(-10.0),
-    maxRapidityTP = cms.double(10.0),
-    tipTP = cms.double(1.0),
-    lipTP = cms.double(5.0),
-    minHitTP = cms.int32(0),
+    # TrackingParticleSelector parameters (Disable all the filters)
+    ptMinTP = cms.double(0.0),            
+    ptMaxTP = cms.double(1e10),          
+    minRapidityTP = cms.double(-1e10),    
+    maxRapidityTP = cms.double(1e10),     
+    tipTP = cms.double(1e10),             
+    lipTP = cms.double(1e10),             
+    minHitTP = cms.int32(0),              
     signalOnlyTP = cms.bool(False),
     intimeOnlyTP = cms.bool(False),
     chargedOnlyTP = cms.bool(False),
     stableOnlyTP = cms.bool(False),
-    pdgIdTP = cms.vint32(),  # nessun filtro
+    pdgIdTP = cms.vint32(),               
     invertRapidityCutTP = cms.bool(False),
-    minPhiTP = cms.double(-3.5),
-    maxPhiTP = cms.double(3.5)
+    minPhiTP = cms.double(-1e10),        
+    maxPhiTP = cms.double(1e10)
 )
 
 # ===== Create the output file to give to the DQM Step =====
+# I) Save General Track Parameters (i.e. QoverP, Eta, Phi, Pt etc)
 process.ACTSTrackingMonitor = process.TrackMon.clone(
-    allTrackProducer = cms.InputTag("tracksACTSRefit"),
-    TrackProducer    = cms.InputTag("tracksACTSRefit"),
+    allTrackProducer = cms.InputTag("tracksACTSRefit", "recoTracksCollACTS"),
+    TrackProducer    = cms.InputTag("tracksACTSRefit", "recoTracksCollACTS"),
     FolderName       = cms.string('Tracking/ACTSTrackParameters'),
     doGeneralPropertiesPlots = cms.bool(True)
 )
-
+# II) Hit Residuals and Pulls (Strips)
 process.ACTSMonitorTrackResiduals = process.MonitorTrackResiduals.clone(
-    Tracks = cms.InputTag("tracksACTSRefit"),
-    OutputFileName = cms.string('test_monitortracksACTS.root'),
+    Tracks = cms.InputTag("tracksACTSRefit", "recoTracksCollACTS"),
+    TopFolderName = cms.string("ACTSStripResiduals"),
+    OutputMEsInRootFile = cms.bool(True),
     trajectoryInput = cms.string('')
 )
+# III) Hit Residuals and Pulls (Pixel)
+process.ACTSSiPixelMonitorTrackResiduals = process.SiPixelMonitorTrackResiduals.clone(
+    Tracks = cms.InputTag("tracksACTSRefit", "recoTracksCollACTS"),
+    TopFolderName = cms.string("ACTSPixelResiduals"),
+    OutputMEsInRootFile = cms.bool(True),
+    trajectoryInput = cms.string('')
+)
+# IV) Track Parameters Residuals and Pulls
+from SimTracker.TrackAssociatorProducers.quickTrackAssociatorByHits_cfi import quickTrackAssociatorByHits
+# For ACTS reFitted Tracks:
+process.ACTSptAssociation = quickTrackAssociatorByHits.clone(
+    label_tp = cms.InputTag("mix","MergedTrackTruth"),
+    label_tr = cms.InputTag("tracksACTSRefit", "recoTracksCollACTS")
+)
+process.ACTSmutliTrackValidator = process.multiTrackValidator.clone(
+    associators = cms.untracked.VInputTag("ACTSptAssociation"),
+    UseAssociators = cms.bool(True),
+    dirName = cms.string("Tracking/ACTSmultiTrackValidator"),
+    label = cms.VInputTag(cms.InputTag("tracksACTSRefit", "recoTracksCollACTS")),
+    doSummaryPlots = cms.untracked.bool(True),
+    trackCollectionForDrCalculation = cms.InputTag("tracksACTSRefit", "recoTracksCollACTS"),
+)
+# For CMSSW reFitted Tracks
+process.CMSSWptAssociation = quickTrackAssociatorByHits.clone(
+    label_tp = cms.InputTag("mix","MergedTrackTruth"),
+    label_tr = cms.InputTag("tracksACTSRefit", "recoTracksCollCMSSW")
+)
+process.CMSSWmutliTrackValidator = process.multiTrackValidator.clone(
+    associators = cms.untracked.VInputTag("CMSSWptAssociation"),
+    UseAssociators = cms.bool(True),
+    dirName = cms.string("Tracking/CMSSWmultiTrackValidator"),
+    label = cms.VInputTag(cms.InputTag("tracksACTSRefit", "recoTracksCollCMSSW")),
+    doSummaryPlots = cms.untracked.bool(True),
+    trackCollectionForDrCalculation = cms.InputTag("tracksACTSRefit", "recoTracksCollCMSSW"),
+)
 
-# ====== Paths ======
+# ====== Sequences ======
 process.p = cms.Sequence(
     process.MeasurementTrackerEvent *
     process.tpClusterProducer *
     process.quickTrackAssociatorByHits *
     process.tracksACTSRefit
 )
+process.load("SimTracker.TrackerHitAssociation.tpClusterProducer_cfi")
+process.ACTSval = cms.Sequence(
+    process.tpClusterProducer *
+    process.ACTSptAssociation *
+    process.ACTSmutliTrackValidator
+)
+process.CMSSWval = cms.Sequence(
+    process.tpClusterProducer *
+    process.CMSSWptAssociation *
+    process.CMSSWmutliTrackValidator
+)
+
+# ====== Paths ======
 process.Myrefit_step = cms.Path(process.p)
 process.MyTrackingDQMPath = cms.Path(process.ACTSTrackingMonitor)
 process.MyResidualPath = cms.Path(process.ACTSMonitorTrackResiduals)
+process.MyResidualSiPath = cms.Path(process.ACTSSiPixelMonitorTrackResiduals)
+process.ActsValidationPath = cms.Path(process.ACTSval)
+process.CmsswValidationPath = cms.Path(process.CMSSWval)
 
-# Schedule definition
+# ====== Schedule definition ======
 process.schedule = cms.Schedule(process.raw2digi_step,process.L1Reco_step,
                                 process.reconstruction_step,process.recosim_step,
                                 process.Flag_HBHENoiseFilter,process.Flag_HBHENoiseIsoFilter,
@@ -338,7 +399,9 @@ process.schedule = cms.Schedule(process.raw2digi_step,process.L1Reco_step,
                                 process.dqmoffline_1_step,process.dqmoffline_2_step,process.dqmofflineOnPAT_step,
                                 process.dqmofflineOnPAT_1_step,process.dqmofflineOnPAT_2_step,process.RECOSIMoutput_step,
                                 process.MINIAODSIMoutput_step,process.NANOEDMAODSIMoutput_step,process.DQMoutput_step,
-                                process.Myrefit_step, process.MyTrackingDQMPath, process.MyResidualPath)
+                                process.Myrefit_step, process.MyTrackingDQMPath, 
+                                process.MyResidualPath, process.MyResidualSiPath, 
+                                process.ActsValidationPath, process.CmsswValidationPath)
 process.schedule.associate(process.patTask)
 from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
 associatePatAlgosToolsTask(process)

@@ -23,6 +23,10 @@
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 #include "Geometry/Records/interface/TrackerTopologyRcd.h"
+#include "CondFormats/AlignmentRecord/interface/TrackerAlignmentRcd.h"
+#include "CondFormats/Alignment/interface/Alignments.h"
+#include "CondFormats/Alignment/interface/AlignTransform.h"
+#include "Alignment/CommonAlignment/interface/Alignable.h"
 #include "DataFormats/GeometrySurface/interface/RectangularPlaneBounds.h"
 #include "DataFormats/GeometrySurface/interface/TrapezoidalPlaneBounds.h"
 
@@ -89,6 +93,10 @@
 #include "TChain.h"
 #include "TFile.h"
 
+#include <iostream>
+#include <string>
+#include <vector>
+
 #include "ACTSinCMSSW/GeometryDataFormat/interface/CMSDetectorElement.h"
 #include "ACTSinCMSSW/GeometryDataFormat/interface/JsonMaterialWriter.hpp"
 
@@ -97,6 +105,31 @@ using KdtSurfacesDim2Bin100 = Acts::Experimental::KdtSurfaces<2u, 100u>;
 const std::array<Acts::AxisDirection, 2UL> casts{Acts::AxisDirection::AxisZ, Acts::AxisDirection::AxisR};
 
 using DetElVect = std::vector<std::shared_ptr<Acts::CMSDetectorElement>>;
+
+TYPELOOKUP_DATA_REG(Alignments);
+
+// DEBUG: function to identify backsided modules:
+
+// Robust inner/outer classification for tilted sensors:
+// Use sign of normal x position (position from origin).
+// If negative, the plane normal points toward the beamline => "inner-facing".
+int innerOuterFromOrientation(const TrackerTopology & tTopo, DetId detId, const GlobalPoint& pos, const GlobalVector& nrm) {
+// const double innerOuterFromOrientation(const TrackerTopology & tTopo, DetId detId, const GlobalPoint& pos, const GlobalVector& nrm) {
+  const double dot = pos.x() * nrm.x() + pos.y() * nrm.y() + pos.z() * nrm.z();
+  const bool normalOut = (dot > 0.0);
+  // Which member of the stack is this?
+  const bool isLower = tTopo.isLower(detId);  // <-- this is the key topo query
+
+  // Map to inner(0)/outer(1)
+  // If normal points outward, lower sensor is inner and upper is outer.
+  // If normal points inward, mapping flips.
+  const int innerOuter = normalOut ? (isLower ? 0 : 1) : (isLower ? 1 : 0);
+  return innerOuter;
+  // return normalOut;
+}
+
+// END of debug  for identify backsided modules
+
 
 struct TrackingGeometryWithDetEls {
     DetElVect detElements;
@@ -499,8 +532,6 @@ void AddCylinderLayer_and_Material(Acts::Experimental::CylinderContainerBlueprin
                     //mat.configureFace(Acts::CylinderVolumeBounds::Face::InnerCylinder, {Acts::AxisDirection::AxisRPhi, Acts::AxisBoundaryType::Bound, 20}, {Acts::AxisDirection::AxisZ, Acts::AxisBoundaryType::Bound, 20});
                     
                     mat.addCylinderContainer(LayerName, Acts::AxisDirection::AxisR, [&](auto& L) {
-                      L.setAttachmentStrategy(Acts::VolumeAttachmentStrategy::Gap)
-                       .setResizeStrategy(Acts::VolumeResizeStrategy::Gap);
                       L.addLayer(LayerName, [&](auto& layer) {
                         std::vector<std::shared_ptr<Acts::Surface>> surfaces = SelectActiveSurfaces_PhaseI(KdtSurfaces, LayerName);
                         // Binning:
@@ -690,6 +721,58 @@ class MyMaterialTrackWriter {
 };
 // ##########################################################################################
 
+std::vector<unsigned int> getExeptions(){
+
+  std::vector<unsigned int> IDs_vec;
+  std::ifstream file("/afs/cern.ch/user/l/ldamenti/CMSSW_16_0_0_pre1/src/ACTSinCMSSW/GeometryBuilder/python/Debug_test/oldRotModules.txt");
+  std::string line;
+
+  while (std::getline(file, line)) {
+      const std::string marker = "Rotation matrices for ";
+      std::size_t start = line.find(marker);
+      if (start != std::string::npos) {
+          start += marker.size();
+          std::size_t end = line.find(" (TID)", start);
+          if (end != std::string::npos) {
+              unsigned int value = std::stoul(line.substr(start, end - start));
+              IDs_vec.push_back(value);
+          }
+      }
+  }
+
+  return IDs_vec;
+}
+
+bool isTranspose(const Eigen::Matrix3d& A, const Eigen::Matrix3d& B, double eps = 1e-3) {
+    return A.isApprox(B.transpose(), eps);
+}
+
+bool isEqual(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B, double eps = 1e-3) {
+    return A.isApprox(B, eps);
+}
+
+bool isOpposite(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B, double eps = 1e-3) {
+    if (A.rows() != B.rows() || A.cols() != B.cols())
+        return false;
+
+    return A.isApprox(-B, eps);
+}
+
+bool isNegativeTranspose(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B, double eps = 1e-3) {
+    if (A.rows() != B.cols() || A.cols() != B.rows())
+        return false;
+
+    return A.isApprox(-B.transpose(), eps);
+}
+
+bool isInverse(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B, double eps = 1e-3) {
+    if (A.rows() != A.cols() || B.rows() != B.cols() || A.rows() != B.rows())
+        return false;
+
+    Eigen::MatrixXd I = Eigen::MatrixXd::Identity(A.rows(), A.cols());
+    return (A * B).isApprox(I, eps) && (B * A).isApprox(I, eps);
+}
+
 
 class ACTSTrackingGeometryProducer : public edm::ESProducer {
 public:
@@ -700,6 +783,9 @@ public:
 
 private:
   edm::ESGetToken<TrackerGeometry, TrackerDigiGeometryRecord> trackerGeomToken_;
+  edm::ESGetToken<TrackerTopology, TrackerTopologyRcd> trackerTopoToken_;
+  edm::ESGetToken<Alignments, TrackerAlignmentRcd> trackerAlignToken_;
+
   bool saveObjfile_, saveSvgfile_, mapMaterial_;
   std::string outputObjFile_, outputSvgFile_, materialFile_;
   std::vector<double> rangeZ_;
@@ -719,30 +805,243 @@ ACTSTrackingGeometryProducer::ACTSTrackingGeometryProducer(const edm::ParameterS
 
     auto cc = setWhatProduced(this);
     trackerGeomToken_ = cc.consumes();
-
+    trackerTopoToken_ = cc.consumes();
+    trackerAlignToken_ = cc.consumes();
   }
 
 //std::unique_ptr<Acts::TrackingGeometry> ACTSTrackingGeometryProducer::produce(const ACTSTrackerGeometryRecord& iRecord) { 
 std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produce(const ACTSTrackerGeometryRecord& iRecord) { 
 
   const TrackerGeometry& trackerGeom = iRecord.get(trackerGeomToken_);
-
+  const TrackerTopology& trackerTopo = iRecord.get(trackerTopoToken_);
+  const Alignments& trackerAlign = iRecord.get(trackerAlignToken_);
+  
   DetElVect DetEl_vector;
 
+  // Get the modules with a different rotation scheme:
+  std::vector<unsigned int> modulesNotTransposeRot = getExeptions();
+   
+  std::map<unsigned int, HepGeom::Transform3D> detID_to_alignInfo;
+  // DEBUG
+  // for (const auto& ali : trackerAlign.m_align) { 
+  //   unsigned int rawID = static_cast<unsigned int>(ali.rawId());
+  //   auto trs = ali.transform();
+  //   detID_to_alignInfo[rawID] = trs; 
+  //   std::cout << "[ALIGMENT] ALIGMENT INFO found for " << rawID << " -> translation: " << trs.getTranslation() << "; rotation: " << trs.getRotation() << std::endl;
+  // }
+
+  const Local2DPoint center(0.,0.); 
+  const Local3DPoint locz(0.,0.,1.);
+  const Local3DPoint locx(1.,0.,0.);
+  const Local3DPoint locy(0.,1.,0.);
+  const GlobalPoint origin(0.,0.,0.);
+  
   // ===== Loop over all the CMSSW detector elments =====
-  for (const auto& det : trackerGeom.dets()) {
-    
+  // for (const auto& det : trackerGeom.dets()) { // <-- DetElements might contain NOT physical surfaces (is an assemply of DetElementUnits) that's why I loop on DetElementUnits (sensitive surfaces ONLY)
+  for (const auto& det : trackerGeom.detUnits()) {
+
     // ===== Get the surface described with CMSSW =====
     auto cmssw_surf = det->surface();
 
+    // DEBUG pront the normal to the surface:
+    // std::cout << "[CMSSW] Normal to module " << det->geographicalId().rawId() << ": " << cmssw_surf.normalVector() << std::endl;
+
     // ===== Define the transformation (i.e. Rotation and Translation) of the CMSSW surface =====
-    const auto& pos = cmssw_surf.position();
-    const auto& rot = cmssw_surf.rotation();
+    auto& pos = cmssw_surf.position();
+    auto& rot = cmssw_surf.rotation();
     Acts::Transform3 t = Acts::Transform3::Identity();
     Acts::RotationMatrix3 R;
-    R << rot.xx(), rot.yx(), rot.zx(), rot.xy(), rot.yy(), rot.zy(), rot.xz(), rot.yz(), rot.zz();
-    t.prerotate(R);
-    t.pretranslate(Acts::Vector3(pos.x()*10, pos.y()*10, pos.z()*10)); // from cm to mm
+
+    // ===== Get the Alignment INFO ===== (not needed as the aligment info are already stored in the transformation)
+    DetId ID = det->geographicalId();
+    // CLHEP::HepRotation Align_rot;
+    // CLHEP::Hep3Vector Align_pos;
+    // auto it = detID_to_alignInfo.find(ID.rawId());
+    // if( it != detID_to_alignInfo.end()){
+    //   auto this_tr = it->second;
+    //   Align_rot = this_tr.getRotation();
+    //   Align_pos = this_tr.getTranslation();
+    //   DEBUG: compare rot e trs from surface and from alignm info
+    //   std::cout << "-----------------\n"
+    //             << "Module ID: " <<  ID.rawId() << "\n"
+    //             << "Rotation and Translation from surface -> Rotation: " << rot << "; translation: " << pos << "\n"
+    //             << "Rotation and Translation from alignment -> Rotation: " << Align_rot << "; translation: " << Align_pos << "\n" << std::endl;
+    // }
+    // else {
+    //   std::cout << "[ERROR] No alignment info found for module " << ID.rawId() << std::endl;
+    // }
+    R << rot.xx(), rot.yx(), rot.zx(), rot.xy(), rot.yy(), rot.zy(), rot.xz(), rot.yz(), rot.zz(); // OLD
+    // R << rot.xx(), rot.xy(), rot.xz(), rot.yx(), rot.yy(), rot.yz(), rot.zx(), rot.zy(), rot.zz(); // Transpose (Overlap in r)
+
+    // ===== Try a different method to get R and t =====
+    GlobalPoint position = trackerGeom.idToDet(ID)->toGlobal(center);
+    GlobalPoint zpos = trackerGeom.idToDet(ID)->toGlobal(locz);
+    GlobalPoint xpos = trackerGeom.idToDet(ID)->toGlobal(locx);
+    GlobalPoint ypos = trackerGeom.idToDet(ID)->toGlobal(locy);
+    GlobalVector dz = zpos - position;
+    GlobalVector dx = xpos - position;
+    GlobalVector dy = ypos - position;
+
+    Eigen::Vector3d dxV(dx.x(), dx.y(), dx.z());
+    Eigen::Vector3d dyV(dy.x(), dy.y(), dy.z());
+    Eigen::Vector3d dVz(dz.x(), dz.y(), dz.z());
+
+    dxV.normalize();
+    dyV.normalize();
+    dxV = dxV - dxV.dot(dVz) * dVz; // make dxV ortogonal to dz
+    dVz.normalize();
+
+    dyV = dVz.cross(dxV);  // make dy ortogonal to dx e dz
+
+    Eigen::Matrix3d Rot;
+    Rot.col(0) = dxV;
+    Rot.col(1) = dyV;
+    Rot.col(2) = dVz;
+
+    std::string subDet;
+    if(ID.subdetId() == PixelSubdetector::PixelBarrel) {
+      subDet = "PixelBarrel";
+    } 
+    else if (ID.subdetId() == PixelSubdetector::PixelEndcap) {
+      subDet = "PixelEndcap";
+    }     
+    else if (ID.subdetId() == StripSubdetector::TID) {
+      subDet = "TID";
+    }     
+    else if (ID.subdetId() == StripSubdetector::TOB) {
+      subDet = "TOB";
+    }     
+    else if (ID.subdetId() == StripSubdetector::TIB) {
+      subDet = "TIB";
+    }     
+    else if (ID.subdetId() == StripSubdetector::TEC)  {
+      subDet = "TEC";
+    }    
+
+    t.prerotate(Rot);
+    t.pretranslate(Acts::Vector3(position.x()*10, position.y()*10, position.z()*10)); // from cm to mm
+
+    // if(isTranspose(R, Rot)){
+    //   std::cout << subDet << ", " <<  det->geographicalId().rawId() << ", B is the transpose of A" << std::endl; 
+    // }
+    // else if (isEqual(R, Rot)){
+    //   std::cout << subDet << ", " <<  det->geographicalId().rawId() << ", B is Equal to of A" << std::endl; 
+
+    // }
+    // else if (isOpposite(R, Rot)){
+    //   std::cout << subDet << ", " <<  det->geographicalId().rawId() << ", B is Opposite to of A" << std::endl; 
+
+    // }
+    // else if (isNegativeTranspose(R, Rot)){
+    //   std::cout << subDet << ", " <<  det->geographicalId().rawId() << ", B is the negative transpose to of A" << std::endl; 
+
+    // }
+    // else if (isInverse(R, Rot)){
+    //   std::cout << subDet << ", " <<  det->geographicalId().rawId() << ", B is the inverse of A" << std::endl; 
+
+    // }
+    // else {
+    //   std::cout << subDet << ", " <<  det->geographicalId().rawId() << ", none relations found for A and B" << std::endl; 
+    // }
+
+
+    // ===== Is this detector element unit flipped? =====
+    // const GlobalPoint Pos = cmssw_surf.position();
+    // const GlobalVector nrm = cmssw_surf.normalVector();
+    // const bool isLower = trackerTopo.isLower(ID);
+    // // const bool normalOut = innerOuterFromOrientation(trackerTopo, ID, Pos, nrm);
+    // const int innerOuter = innerOuterFromOrientation(trackerTopo, ID, Pos, nrm);
+    // //const bool isFlipped = ( isLower && innerOuter == 1 ) || ( !isLower && innerOuter == 0 );    
+
+    // Eigen::Matrix3d Rz;
+    // Rz << -1,  0,  0,
+    //        0, -1,  0,
+    //        0,  0,  1;
+    // Eigen::Matrix3d FlipX;
+    // FlipX << -1,  0,  0,
+    //            0,  1,  0,
+    //            0,  0,  1;
+    // Eigen::Matrix3d FlipY;
+    // FlipY <<   1,  0,  0,
+    //            0, -1,  0,
+    //            0,  0,  1;
+
+    // if (ID.subdetId() == StripSubdetector::TIB) {
+    //   std::cout << "TIB module found: layer = " << trackerTopo.layer(ID) << "; side = " << trackerTopo.tibSide(ID) << "; Order = " << trackerTopo.tibOrder(ID) << std::endl;
+
+
+    //   R << rot.xx(), rot.yx(), rot.zx(), rot.xy(), rot.yy(), rot.zy(), rot.xz(), rot.yz(), rot.zz(); // OLD
+
+    //   if(trackerTopo.tibIsStereo(ID)){
+    //     double alpha = 0.100;
+    //     alpha *= trackerTopo.tibSide(ID) * ((trackerTopo.tibString(ID) % 2 == 0) ? +1 : -1); 
+    //     std::cout << "TIB module is stereo (alpha = " << alpha << ")" << std::endl;
+    //     Eigen::Matrix3d Rstereo;
+    //     Rstereo << cos(alpha), -sin(alpha), 0,
+    //                sin(alpha),  cos(alpha), 0,
+    //               0,           0,          1;
+
+    //     R = R * Rstereo;
+    //   }
+
+
+    //   if (innerOuter == 0) {
+    //     std::cout << "Module is flipped, rotating it" << std::endl;
+    //     // R << rot.xx(), -rot.yx(), -rot.zx(), rot.xy(), -rot.yy(), -rot.zy(), rot.xz(), -rot.yz(), -rot.zz(); // <-- Flip Z and Y
+    //     // R << -rot.xx(), -rot.yx(), -rot.zx(), -rot.xy(), -rot.yy(), -rot.zy(), -rot.xz(), -rot.yz(), -rot.zz(); // <-- Flip Z, Y and X 
+    //     // R << -rot.xx(), -rot.yx(), -rot.zx(), -rot.xy(), -rot.yy(), -rot.zy(),  rot.xz(),  rot.yz(),  rot.zz(); // <-- 180 deg rot around Z 
+    //     R << rot.xx(), rot.yx(), rot.zx(), rot.xy(), rot.yy(), rot.zy(), rot.xz(), rot.yz(), rot.zz(); // OLD
+    //     // R <<  rot.xx(),  rot.yx(), -rot.zx(), rot.xy(),  rot.yy(), -rot.zy(), -rot.xz(), -rot.yz(),  rot.zz();
+    //     // R <<  rot.xx(), -rot.yx(),  rot.zx(), rot.xy(), -rot.yy(),  rot.zy(), -rot.xz(),  rot.yz(), -rot.zz();
+    //     R = Rz * R * FlipX;
+    //   }
+    //   else {
+    //     R << rot.xx(), rot.yx(), rot.zx(), rot.xy(), rot.yy(), rot.zy(), rot.xz(), rot.yz(), rot.zz(); // OLD
+    //   }
+    // }
+    // else if(ID.subdetId() == StripSubdetector::TOB) {
+    //   if (innerOuter == 0) {
+    //     R << rot.xx(), rot.yx(), rot.zx(), rot.xy(), rot.yy(), rot.zy(), rot.xz(), rot.yz(), rot.zz(); // OLD
+    //     R = R * FlipY;
+    //   }
+    //   else {
+    //     R << rot.xx(), rot.yx(), rot.zx(), rot.xy(), rot.yy(), rot.zy(), rot.xz(), rot.yz(), rot.zz(); // OLD
+    //   }
+    // }
+    // else if (ID.subdetId() == StripSubdetector::TEC) {
+    //   if (innerOuter == 0) {
+    //     R << rot.xx(), rot.yx(), rot.zx(), rot.xy(), rot.yy(), rot.zy(), rot.xz(), rot.yz(), rot.zz(); // OLD
+    //   }
+    //   else {
+    //     R << rot.xx(), rot.yx(), rot.zx(), rot.xy(), rot.yy(), rot.zy(), rot.xz(), rot.yz(), rot.zz(); // OLD
+    //   }
+    // }
+    // else {
+    //   R << rot.xx(), rot.yx(), rot.zx(), rot.xy(), rot.yy(), rot.zy(), rot.xz(), rot.yz(), rot.zz(); // OLD
+    // }
+    // else if (ID.subdetId() == StripSubdetector::TOB){
+
+    //   if ((trackerTopo.tobLayer(ID) == 1 && trackerTopo.tobIsStereo(ID)) || (trackerTopo.tobLayer(ID) == 2)){// && trackerTopo.tobIsStereo(ID))){
+    //     R << rot.xx(), -rot.yx(), -rot.zx(), rot.xy(), -rot.yy(), -rot.zy(), rot.xz(), -rot.yz(), -rot.zz();
+    //   }      
+    //   else {
+    //     R << rot.xx(), rot.yx(), rot.zx(), rot.xy(), rot.yy(), rot.zy(), rot.xz(), rot.yz(), rot.zz(); // OLD
+    //   }
+    // }
+
+
+    // R << rot.xx(), rot.xy(), rot.xz(), rot.yx(), rot.yy(), rot.yz(), rot.zx(), rot.zy(), rot.zz(); // right-multiplication (no)
+    // R << rot.xx(), rot.xy(), rot.xz(), rot.yx(), rot.yy(), rot.yz(), rot.zx(), rot.zy(), rot.zz(); // Trasposta (no)
+    // R << rot.xx(), rot.xy(), -rot.xz(), rot.yx(), rot.yy(), -rot.yz(), rot.zx(), rot.zy(), -rot.zz(); // Z filePath (no)
+    // R << rot.xy(), rot.yy(), rot.zy(), rot.xx(), rot.yx(), rot.zx(), rot.xz(), rot.yz(), rot.zz(); // swap X Y (no)
+
+    // auto detID = det->geographicalId().rawId();
+    // if (std::find(modulesNotTransposeRot.begin(), modulesNotTransposeRot.end(), detID) != modulesNotTransposeRot.end()){
+    //   R << rot.xx(), rot.xy(), rot.xz(), rot.yx(), rot.yy(), rot.yz(), rot.zx(), rot.zy(), rot.zz(); // equal to the one from cmssw (for a subset of modules from TEC and TID)
+    // }
+    // else {
+    //   R << rot.xx(), rot.yx(), rot.zx(), rot.xy(), rot.yy(), rot.zy(), rot.xz(), rot.yz(), rot.zz(); // OLD (transposed wrt cmssw one)
+    // }
 
     // ===== Define the ACTS surface considering two tipes of bounds (i.e. Rectangle and Trapezoid) =====
     std::shared_ptr<Acts::Surface> acts_surf = nullptr;
@@ -764,10 +1063,15 @@ std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produc
 
       const std::size_t kValues = Acts::TrapezoidBounds::BoundValues::eSize;
       std::array<double, kValues> bValues{};
-      std::vector<double> bVector = {params[3] * 10, // cm to mm
-                                     params[3] * 10, 
-                                     (params[0] + params[1]) / 2 * 10, 
-                                     0.0};
+      // OLD WRONG WAY
+      // std::vector<double> bVector = {params[3] * 10, // cm to mm
+      //                                params[3] * 10, 
+      //                                (params[0] + params[1]) / 2 * 10, 
+      //                                0.0};
+      std::vector<double> bVector = { params[0] * 10,  // half bottom edge 
+                                      params[1] * 10,  // half top edge    
+                                      params[3] * 10,  // half Y / apothem 
+                                      0.0};               // rotation angle
 
       std::copy_n(bVector.begin(), kValues, bValues.begin());
       acts_surf = Acts::Surface::makeShared<Acts::PlaneSurface>(t, std::move(std::make_shared<const Acts::TrapezoidBounds>(bValues)));
@@ -777,7 +1081,6 @@ std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produc
     // ===== Define the CMSDetectorElementData (i.e. the struct needed to define the CMS Detector Element in ACTS) =====
     Acts::CMSDetectorElementData cmsDetData;
     cmsDetData.surf_ = acts_surf;
-    cmsDetData.thickness_ = 1;
     cmsDetData.trans_ = t;
 
     DetId detid = det->geographicalId();
@@ -785,23 +1088,22 @@ std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produc
     
     if (detid.subdetId() == PixelSubdetector::PixelBarrel) {
       cmsDetData.subDetector_ = std::string("PixelBarrel");
-      
+      cmsDetData.thickness_ = 0.285*Acts::UnitConstants::mm;
     } else if (detid.subdetId() == PixelSubdetector::PixelEndcap) {
-
       cmsDetData.subDetector_ = std::string("PixelEndcap");
-
+      cmsDetData.thickness_ = 0.3*Acts::UnitConstants::mm;
     } else if (detid.subdetId() == StripSubdetector::TIB) {
-
       cmsDetData.subDetector_ = std::string("TIB");
+      cmsDetData.thickness_ = 0.32*Acts::UnitConstants::mm;
     } else if (detid.subdetId() == StripSubdetector::TID) {
-
       cmsDetData.subDetector_ = std::string("TID");
+      cmsDetData.thickness_ = 0.32*Acts::UnitConstants::mm;
     } else if (detid.subdetId() == StripSubdetector::TOB) {
-
       cmsDetData.subDetector_ = std::string("TOB");
-
+      cmsDetData.thickness_ = 0.5*Acts::UnitConstants::mm;
     } else if (detid.subdetId() == StripSubdetector::TEC) {
       cmsDetData.subDetector_ = std::string("TEC");
+      cmsDetData.thickness_ = 0.5*Acts::UnitConstants::mm;
     }
 
     // ===== Save the converted detector element in a vector =====
@@ -1095,37 +1397,37 @@ std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produc
                 brl.setAttachmentStrategy(Acts::VolumeAttachmentStrategy::Gap)
                     .setResizeStrategy(Acts::VolumeResizeStrategy::Gap);
 
-                auto makeLayer = [&](const std::string& name, double Bin_Phi, double Bin_Z) {
-                    brl.addLayer(name, [&](auto& layer) {
-                      std::vector<std::shared_ptr<Acts::Surface>> surfaces = SelectActiveSurfaces_PhaseI(Kdtsurfaces, name);
-                      // Binning:
-                      makeBinning(layer, Acts::SurfaceArrayNavigationPolicy::LayerType::Cylinder, Bin_Phi, Bin_Z);
+                // auto makeLayer = [&](const std::string& name, double Bin_Phi, double Bin_Z) {
+                //     brl.addLayer(name, [&](auto& layer) {
+                //       std::vector<std::shared_ptr<Acts::Surface>> surfaces = SelectActiveSurfaces_PhaseI(Kdtsurfaces, name);
+                //       // Binning:
+                //       makeBinning(layer, Acts::SurfaceArrayNavigationPolicy::LayerType::Cylinder, Bin_Phi, Bin_Z);
 
-                      layer.setSurfaces(surfaces)
-                          .setLayerType(Acts::Experimental::LayerBlueprintNode::LayerType::Cylinder)
-                          .setEnvelope(Acts::ExtentEnvelope{{
-                              .z = {5*Acts::UnitConstants::mm, 5*Acts::UnitConstants::mm},
-                              .r = {1*Acts::UnitConstants::mm, 1*Acts::UnitConstants::mm},
-                          }})
-                          .setTransform(base)
-                          .setUseCenterOfGravity(false, false, false); // To fix the transaltion on x-y
-                    });
-                  };
+                //       layer.setSurfaces(surfaces)
+                //           .setLayerType(Acts::Experimental::LayerBlueprintNode::LayerType::Cylinder)
+                //           .setEnvelope(Acts::ExtentEnvelope{{
+                //               .z = {5*Acts::UnitConstants::mm, 5*Acts::UnitConstants::mm},
+                //               .r = {1*Acts::UnitConstants::mm, 1*Acts::UnitConstants::mm},
+                //           }})
+                //           .setTransform(base)
+                //           .setUseCenterOfGravity(false, false, false); // To fix the transaltion on x-y
+                //     });
+                //   };
 
                 // makeLayer("Layer_name", Bin_Phi, Bin_Z)
-                AddCylinderLayer_and_Material(&brl, "TOB0", Kdtsurfaces, 42, 10);
+                AddCylinderLayer_and_Material(&brl, "TOB0", Kdtsurfaces, 42, 24);
                 AddExtraLayer("ExtraTOBMatLayer1", true, &brl, GenerateTranslation(0, 0, 0), std::make_shared<Acts::CylinderVolumeBounds>(650*Acts::UnitConstants::mm, 655*Acts::UnitConstants::mm, 1000*Acts::UnitConstants::mm));
-                AddCylinderLayer_and_Material(&brl, "TOB1", Kdtsurfaces, 48, 10);
+                AddCylinderLayer_and_Material(&brl, "TOB1", Kdtsurfaces, 48, 24);
                 AddExtraLayer("ExtraTOBMatLayer2", true, &brl, GenerateTranslation(0, 0, 0), std::make_shared<Acts::CylinderVolumeBounds>(740*Acts::UnitConstants::mm, 750*Acts::UnitConstants::mm, 1000*Acts::UnitConstants::mm));
-                AddCylinderLayer_and_Material(&brl, "TOB2", Kdtsurfaces, 54, 10);
+                AddCylinderLayer_and_Material(&brl, "TOB2", Kdtsurfaces, 54, 24);
                 AddExtraLayer("ExtraTOBMatLayer3", true, &brl, GenerateTranslation(0, 0, 0), std::make_shared<Acts::CylinderVolumeBounds>(805*Acts::UnitConstants::mm, 810*Acts::UnitConstants::mm, 1000*Acts::UnitConstants::mm));
-                AddCylinderLayer_and_Material(&brl, "TOB3", Kdtsurfaces, 60, 10);
+                AddCylinderLayer_and_Material(&brl, "TOB3", Kdtsurfaces, 60, 24);
                 AddExtraLayer("ExtraTOBMatLayer4", true, &brl, GenerateTranslation(0, 0, 0), std::make_shared<Acts::CylinderVolumeBounds>(940*Acts::UnitConstants::mm, 943*Acts::UnitConstants::mm, 1000*Acts::UnitConstants::mm));
-                AddCylinderLayer_and_Material(&brl, "TOB4", Kdtsurfaces, 66, 10);
+                AddCylinderLayer_and_Material(&brl, "TOB4", Kdtsurfaces, 66, 24);
                 AddExtraLayer("ExtraTOBMatLayer5", true, &brl, GenerateTranslation(0, 0, 0), std::make_shared<Acts::CylinderVolumeBounds>(1000*Acts::UnitConstants::mm, 1050*Acts::UnitConstants::mm, 1000*Acts::UnitConstants::mm));
-                //AddCylinderLayer_and_Material(&brl, "TOB5", Kdtsurfaces, 74, 10);
+                AddCylinderLayer_and_Material(&brl, "TOB5", Kdtsurfaces, 74, 24);
 
-                makeLayer("TOB5", 74,10);
+                //makeLayer("TOB5", 74,10);
               });
         });
         

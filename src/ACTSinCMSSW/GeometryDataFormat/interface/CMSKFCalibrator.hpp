@@ -1,6 +1,8 @@
 #ifndef CMS_KF_CALIBRATOR_HPP
 #define CMS_KF_CALIBRATOR_HPP
 
+#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
+
 #include "Acts/Definitions/Algebra.hpp"
 #include "Acts/Definitions/TrackParametrization.hpp"
 #include "Acts/EventData/SourceLink.hpp"
@@ -23,9 +25,10 @@ void CMSKFCalibrator(const Acts::GeometryContext& gctx,
         state.allocateCalibrated(2);
         state.template calibrated<2>() = myLink.lPos;
         state.template calibratedCovariance<2>() << myLink.lCov;
-
         state.setProjectorSubspaceIndices(std::array<Acts::BoundIndices, 2>{Acts::eBoundLoc0, Acts::eBoundLoc1});
-        //std::cout << "Calibrating 1D hit: pos = " << myLink.lPos << ", cov = " << myLink.lCov << std::endl;
+
+
+        // std::cout << "[CAL] Calibrating 2D hit: pos = " << myLink.lPos << ", cov = " << myLink.lCov << std::endl;
 
     } else if (myLink.hitType == HitType::Hit1D){
 
@@ -36,9 +39,10 @@ void CMSKFCalibrator(const Acts::GeometryContext& gctx,
         state.allocateCalibrated(1);
         state.template calibrated<1>() = pos1d;
         state.template calibratedCovariance<1>() << myLink.lCov(0,0);
-
         state.setProjectorSubspaceIndices(std::array<Acts::BoundIndices, 1>{Acts::eBoundLoc0});
-        //std::cout << "Calibrating 1D hit: pos = " << pos1d << ", cov = " << myLink.lCov(0,0) << std::endl;
+
+
+        // std::cout << "[CAL] Calibrating 1D hit: pos = " << pos1d << ", cov = " << myLink.lCov << std::endl;
     } else {
         std::cout << "ERROR: Unrecognized hit type" << std::endl;
     }

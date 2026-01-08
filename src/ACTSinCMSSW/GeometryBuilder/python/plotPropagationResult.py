@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+
+# DOES NOT WORK. USE plotCMS.cc INSTEAD!
+
 import uproot
 import awkward as ak
 import numpy as np

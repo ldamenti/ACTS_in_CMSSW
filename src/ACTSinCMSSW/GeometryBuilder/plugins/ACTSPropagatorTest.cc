@@ -90,8 +90,6 @@
 #include "Acts/Propagator/EigenStepper.hpp"
 #include "Acts/MagneticField/NullBField.hpp"
 
-
-
 #include <fstream>
 #include <iomanip>
 #include <random>
@@ -300,7 +298,18 @@ void ACTSPropagatorTest::produce(edm::Event& iEvent, const edm::EventSetup& iSet
   // ===== Definition of EigenStepper =====
   auto magFieldPtr = std::make_shared<const CMSMagneticFieldProvider>(magField);
   auto BField_0T = std::make_shared<Acts::NullBField>(); // nullBfield
-  Acts::EigenStepper<> es(BField_0T);
+  Acts::EigenStepper<> es(magFieldPtr);
+
+
+  GlobalPoint point(0, 0, 0); // cm
+  GlobalVector field = magField.inTesla(point);
+  std::cout << "B CMSSW -> " << field << std::endl;
+
+  Acts::MagneticFieldProvider::Cache cache;
+  auto B_res = magFieldPtr->getField(Acts::Vector3{0,0,0}, cache);
+  if(B_res.ok()){
+    std::cout << "B ACTS -> " << B_res.value().transpose() / Acts::UnitConstants::T << std::endl;
+  }
 
   // *** NAVIGATOR ***
   Acts::Navigator::Config navi_cfg;
@@ -355,7 +364,7 @@ void ACTSPropagatorTest::produce(edm::Event& iEvent, const edm::EventSetup& iSet
 
   // Verify the propagarion:
   RootPropagationStepsWriter::Config PropStepWrite_cfg;
-  PropStepWrite_cfg.filePath = "Propagator_test_noB.root";
+  PropStepWrite_cfg.filePath = "Propagator_test.root";
   RootPropagationStepsWriter PropStepWrite(PropStepWrite_cfg);
   PropStepWrite.writeT(1, PropSum_vec);
   PropStepWrite.finalize();

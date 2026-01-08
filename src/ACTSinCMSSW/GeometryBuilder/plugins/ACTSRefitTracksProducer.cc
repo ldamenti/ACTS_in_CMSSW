@@ -233,10 +233,13 @@ private:
     std::vector<double> covariance_vec;
     int pdgID;
 
+    int hitIndex = 0;
+
     // Summary Parameters:
     double TotTrueParticles = 0;
     double TotCMSSW_Matched = 0;
     double TotACTS_reFitted = 0;
+    double TotACTS_GoodOoutIndetID = 0;
 };
 
 
@@ -253,9 +256,10 @@ ACTSRefitTracksProducer::ACTSRefitTracksProducer(const edm::ParameterSet& iConfi
       magFieldToken_(esConsumes<MagneticField, IdealMagneticFieldRecord>())
     
   {
-    //produces<TrackingRecHitCollection>("actsRecHits");
-    produces<reco::TrackCollection>();
+    produces<reco::TrackCollection>("recoTracksCollACTS");
+    produces<reco::TrackCollection>("recoTracksCollCMSSW");
     produces<reco::TrackExtraCollection>();
+    produces<TrackingRecHitCollection>();
 
     for (const auto& tag : trackLabels_) {
         trackTokens_.push_back(consumes<edm::View<reco::Track>>(tag));
@@ -284,11 +288,16 @@ ACTSRefitTracksProducer::~ACTSRefitTracksProducer() {
     std::cout << "Total Number of true tracks: " << TotTrueParticles << std::endl;
     std::cout << "Total Number of matched tracks from CMSSW: " << TotCMSSW_Matched << " (efficiency = " << TotCMSSW_Matched / TotTrueParticles * 100 << "%)" << std::endl;
     std::cout << "Total Number of reFit from ACTS: " << TotACTS_reFitted << std::endl;
+    std::cout << "Total Number of tracks with matching Outer and Inner detID: " << TotACTS_GoodOoutIndetID << " (" << TotACTS_GoodOoutIndetID / TotCMSSW_Matched * 100 << "%)" <<std::endl;
 }
 
 //void ACTSRefitTracksProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
 void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
-    bool verbose = true;
+    bool verbose = false;
+
+    // ===== Define the global hits collection =====
+    auto allHitsCollection = std::make_unique<TrackingRecHitCollection>();
+
 
     // #############################################################################################
     // # PART I: Find the association Reco <-> Sim track (i.e. Reco Tracks <-> Tracking particles) #
@@ -357,6 +366,14 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
 
     // *** EigenStepper ***
     auto magFieldPtr = std::make_shared<const CMSMagneticFieldProvider>(magField);
+
+
+    // Acts::MagneticFieldProvider::Cache cache;
+    // auto B_res = magFieldPtr->getField(Acts::Vector3{0,0,0}, cache);
+    // if(B_res.ok()){
+    //     std::cout << "[DEBUG] B ACTS -> " << B_res.value().transpose() / Acts::UnitConstants::T << std::endl;
+    // }
+
     Acts::EigenStepper<> es(magFieldPtr);
     // *** NAVIGATOR ***
     Acts::Navigator::Config navi_cfg;
@@ -368,19 +385,19 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
     Acts::Propagator prop(es, navi, std::move(prop_logger));
 
     // ===== Define the output =====
+    /// NOTE: the Track collection for CMSSW is temporary (just to have the same number of entries of ACTS one)
+    /// (related to the issue of the inner and outer detId match)
     auto TracksColl = std::make_unique<reco::TrackCollection>();
+    auto TracksColl_CMSSW = std::make_unique<reco::TrackCollection>();
     auto ExtraColl  = std::make_unique<reco::TrackExtraCollection>();
 
-
     // Loop over all the tracking collection (in my file I have only one collection, called generalTracks, but in principle there could be more)
-    int recoTracksOK = 0;
     for (const auto& trackToken : trackTokens_) { 
 
         // Get the tracks associated to this collection:
         edm::Handle<edm::View<reco::Track>> tracksHandle;
         iEvent.getByToken(trackToken, tracksHandle);
         const edm::View<reco::Track>& tracks = *tracksHandle;
-
 
         // Create a smart pointer (RefToBase) per track and fill all the pointers into a vector:
         edm::RefToBaseVector<reco::Track> trackRefs;
@@ -428,9 +445,8 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
                 Quality_ = quality;
 
                 const reco::Track& recoTrack = *trackRef;
-                
+            
                 // Needed prpperties: phi, eta, q/P, particle hypotesis, covariance matrix
-                std::cout << "==== Parameters of the RECO Track: ==== " << std::endl;
                 Eigen::Vector4d pos4(recoTrack.vertex().x(),  recoTrack.vertex().y(),  recoTrack.vertex().z(), 0.0);
                 auto phi = recoTrack.phi();
                 auto eta = recoTrack.eta();
@@ -438,12 +454,6 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
                 Eigen::Vector3d dir(std::cos(phi) * std::sin(theta), std::sin(phi) * std::sin(theta), std::cos(theta));
                 auto qoverP = recoTrack.qoverp(); 
                 auto covariance = recoTrack.covariance();
-
-                std::cout << "4D Position (x, y, z, t): " << pos4[0]*10 << " " << pos4[1]*10 << " " << pos4[2]*10 << " " << pos4[3] << " " << std::endl; // X, Y, Z, T  (from cm to mm)
-                std::cout << "3D Direction: " << dir.x() << " " << dir.y() << " " << dir.z() << std::endl;
-                std::cout << "qoverP: " << qoverP << std::endl;
-                std::cout << "covariance: " << covariance << std::endl;
-                std::cout << "chi2 / ndof = " << recoTrack.chi2() / recoTrack.ndof()<< std::endl;
                 int particleID = 0;
                 if(found != recoToSim.end() && !found->val.empty()) {
                     const auto& tpPair = found->val.front();
@@ -451,7 +461,16 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
                     particleID = tpRef->pdgId();
                 }
                 pdgID = particleID;
-                std::cout << "Particle ID = " << pdgID << std::endl;
+
+                if(verbose) {
+                    std::cout << "==== Parameters of the RECO Track: ==== " << std::endl;
+                    std::cout << "4D Position (x, y, z, t): " << pos4[0]*10 << " " << pos4[1]*10 << " " << pos4[2]*10 << " " << pos4[3] << " " << std::endl; // X, Y, Z, T  (from cm to mm)
+                    std::cout << "3D Direction: " << dir.x() << " " << dir.y() << " " << dir.z() << std::endl;
+                    std::cout << "qoverP: " << qoverP << std::endl;
+                    std::cout << "covariance: " << covariance << std::endl;
+                    std::cout << "chi2 / ndof = " << recoTrack.chi2() / recoTrack.ndof()<< std::endl;
+                    std::cout << "Particle ID = " << pdgID << std::endl;
+                }
 
 
                 pos4_vec = {pos4[0], pos4[1], pos4[2], pos4[3]};
@@ -471,10 +490,9 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
                 const StripClusterParameterEstimator* stripCPE = &iSetup.getData(stripCpeToken_);
 
                 int hitCount_cmssw = 0;
-                // auto hitsCollection = std::make_unique<TrackingRecHitCollection>();
-                // TrackingRecHitRefProd rHits = iEvent.getRefBeforePut<TrackingRecHitCollection>("actsRecHits");
+
                 // unsigned firstH = hitsCollection->size();
-               std::ofstream outF_cmssw("DetEl_CMSSWInfo.txt", std::ios::app);
+                std::ofstream outF_cmssw("DetEl_CMSSWInfo.txt", std::ios::app);
                 for (const auto& hit : recoTrack.recHits()) {
                     // save the hit in a collection to be pushed than in the event:
                     // hitsCollection->push_back(hit->clone());
@@ -495,14 +513,14 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
 
                     // Fitting:
                     if (pos.valid){
-                        if(h_type == 1 ) std::cout << "PixelBarrel Hit: " << std::endl;
-                        if(h_type == 2 ) std::cout << "PixelEndcap Hit: " << std::endl;
-                        if(h_type == 3 ) std::cout << "TIB Hit: " << std::endl;
-                        if(h_type == 4 ) std::cout << "TID Hit: " << std::endl;
-                        if(h_type == 5 ) std::cout << "TOB Hit: " << std::endl;
-                        if(h_type == 6 ) std::cout << "TEC Hit: " << std::endl;
+                        // if(h_type == 1 ) std::cout << "[DEBUG] PixelBarrel Hit: " << std::endl;
+                        // if(h_type == 2 ) std::cout << "[DEBUG] PixelEndcap Hit: " << std::endl;
+                        // if(h_type == 3 ) std::cout << "[DEBUG] TIB Hit: " << std::endl;
+                        // if(h_type == 4 ) std::cout << "[DEBUG] TID Hit: " << std::endl;
+                        // if(h_type == 5 ) std::cout << "[DEBUG] TOB Hit: " << std::endl;
+                        // if(h_type == 6 ) std::cout << "[DEBUG] TEC Hit: " << std::endl;
 
-                        std::cout << "Hit local pos: (" << pos.x*10 << ", " << pos.y*10 << ") ± (" << pos.x_err*10 << ", " << pos.y_err*10 << ")" << std::endl;
+                        // std::cout << "[DEBUG] Hit local pos: (" << pos.x*10 << ", " << pos.y*10 << ") ± (" << pos.x_err*10 << ", " << pos.y_err*10 << ")" << std::endl;
                         hit_type_.push_back(h_type);
                         local_x_.push_back(pos.x*10); // from cm to mm
                         local_y_.push_back(pos.y*10);
@@ -547,7 +565,7 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
                         auto surf = detEl->surface().getSharedPtr();
                         auto globalPos = surf->localToGlobal(local_gCtx, Acts::Vector2(0, 0), Acts::Vector3(0,0,0));
         
-                        std::cout << "ACTS detId before the fit " << this_ID <<"; subDet = " << subDet << std::endl;
+                        // std::cout << "[DEBUG] ACTS detId before the fit " << this_ID <<"; subDet = " << subDet << std::endl;
                         outF << surf->geometryId() << "; " << this_ID << "; " << subDet << "; " << globalPos.transpose() << '\n';
                     }
                 }
@@ -557,8 +575,8 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
 
 
 
-                std::cout << ">>>>> Number of source links: " << ACTS_hits.size() << std::endl;
-                std::cout << ">>>>> Number Rec Hits: " << hitCount_cmssw << std::endl;
+                // std::cout << ">>>>> Number of source links: " << ACTS_hits.size() << std::endl;
+                // std::cout << ">>>>> Number Rec Hits: " << hitCount_cmssw << std::endl;
                 hit_type_.clear();
                 local_x_.clear();
                 local_y_.clear();
@@ -636,7 +654,7 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
 
                 if (fit_result.ok()) {
                     TotACTS_reFitted += 1;
-                    std::cerr << "#FIT successfull#" << std::endl;
+                    
                     Acts::TrackProxy trackProxy = fit_result.value();
 
                     Acts::Vector3 fitted_dir = trackProxy.direction();   
@@ -648,16 +666,19 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
                     double qOverP = trackProxy.qOverP();
                     auto fitted_cov = trackProxy.covariance();
 
-                    std::cout << ">>>> Fitted parameters:" << std::endl;
-                    std::cout << "Fitted global position: x = " << fitted_pos.transpose()[0] << " y = " << fitted_pos.transpose()[1] << " z = " << fitted_pos.transpose()[2] << " t = 0" << std::endl;
-                    std::cout << "Fitted direction (normalized): x = " << fitted_dir.transpose()[0] << " y = " << fitted_dir.transpose()[1] << " z = " << fitted_dir.transpose()[2] << std::endl;
-                    std::cout << "loc0 = " << loc0 << std::endl;
-                    std::cout << "loc1 = " << loc1 << std::endl;
-                    std::cout << "phi = " << phi << std::endl;
-                    std::cout << "theta = " << theta << std::endl;
-                    std::cout << "q Over P = " << qOverP << std::endl;
-                    std::cout << "covariance = " << std::endl;
-                    std::cout << fitted_cov << std::endl;
+                    if(verbose){
+                        std::cerr << "#FIT successfull#" << std::endl;
+                        std::cout << ">>>> Fitted parameters:" << std::endl;
+                        std::cout << "Fitted global position: x = " << fitted_pos.transpose()[0] << " y = " << fitted_pos.transpose()[1] << " z = " << fitted_pos.transpose()[2] << " t = 0" << std::endl;
+                        std::cout << "Fitted direction (normalized): x = " << fitted_dir.transpose()[0] << " y = " << fitted_dir.transpose()[1] << " z = " << fitted_dir.transpose()[2] << std::endl;
+                        std::cout << "loc0 = " << loc0 << std::endl;
+                        std::cout << "loc1 = " << loc1 << std::endl;
+                        std::cout << "phi = " << phi << std::endl;
+                        std::cout << "theta = " << theta << std::endl;
+                        std::cout << "q Over P = " << qOverP << std::endl;
+                        std::cout << "covariance = " << std::endl;
+                        std::cout << fitted_cov << std::endl;
+                    }
 
                     // ===== Construct the reco::Track =====
                     auto chi2 = static_cast<double>(trackProxy.chi2());
@@ -681,6 +702,8 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
                     auto trackExtra_cmssw = recoTrack.extra();
                     unsigned int outerId_cmssw = 0;
                     unsigned int innerId_cmssw = 0;
+                    unsigned int firstRecHit = 0, recHitsSize = 0;
+                    std::unique_ptr<TrackingRecHitCollection> hitCollection;
                     PropagationDirection seedDir_cmssw{};
                     edm::RefToBase<TrajectorySeed> seedRef_cmssw;
                     if (trackExtra_cmssw.isNonnull()) {
@@ -689,7 +712,16 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
                         seedRef_cmssw = trackExtra.seedRef();
                         innerId_cmssw = trackExtra.innerDetId();
                         outerId_cmssw = trackExtra.outerDetId();
+                        // test:
+                        firstRecHit   = trackExtra.firstRecHit();
+                        recHitsSize   = trackExtra.recHitsSize();
+
+                        hitCollection = std::make_unique<TrackingRecHitCollection>(trackExtra.recHitsProduct());
                     }
+                    edm::OrphanHandle<TrackingRecHitCollection> hitHandle = iEvent.put(std::move(hitCollection));
+                    TrackingRecHitRefProd hitRefProd(hitHandle);
+
+
 
                     // OUTER 
                     // auto oState = trackProxy.outermostTrackState();
@@ -751,9 +783,9 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
                                 auto detEl = dynamic_cast<const Acts::CMSDetectorElement*>(this_surf.associatedDetectorElement());
                                 auto this_ID = detEl->detID();
                                 
-                                std::cout << "ThisID: " << this_ID << std::endl;
+                                // std::cout << "[DEBUG] ThisID: " << this_ID << std::endl;
                                 if (this_ID == outerId_cmssw) {
-                                    std::cout << "Outer detId Identified! With id: " << this_ID << std::endl;
+                                    // std::cout << "[DEBUG] Outer detId Identified! With id: " << this_ID << std::endl;
                                     outerOK = true;
                                     // Get the Momentum
                                     auto oAbsoluteP = abs(1 / this_state.parameters()[4]);
@@ -783,7 +815,7 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
                                     // std::cout << "Covariance: " << *oCovariance_ptr << std::endl;
                                 } 
                                 else if (this_ID == innerId_cmssw) {
-                                    std::cout << "Inner detId Identified! With id: " << this_ID << std::endl;
+                                    // std::cout << "[DEBUG] Inner detId Identified! With id: " << this_ID << std::endl;
                                     innerOK = true;
                                     // Get the Momentum
                                     auto iAbsoluteP = abs(1 / this_state.parameters()[4]);
@@ -819,10 +851,22 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
                     
                     if (outerOK && innerOK) {
                         std::cout << ">>>>> INNER AND OUTER DETID IDENTIFIED" << std::endl;
-                        recoTracksOK += 1;
+                        TotACTS_GoodOoutIndetID += 1;
                         reco::TrackExtra trackExtra_acts(*oStatePosition_ptr, *oStateMomentum_ptr, true, *iStatePosition_ptr, *iStateMomentum_ptr, true, *oCovariance_ptr, outerId_cmssw, *iCovariance_ptr, innerId_cmssw, seedDir_cmssw, seedRef_cmssw);
-                        // Assign to the track state the hit collection:
-                        // trackExtra_acts.setHits(rHits, firstH, nH);
+                        trackExtra_acts.setHits(hitRefProd, firstRecHit, recHitsSize);
+                        
+                        // ===== Assign the reco::Hits to the trackExtra =====
+                        // auto hitsCollection = std::make_unique<TrackingRecHitCollection>();
+                        // auto const firstHitIndex = hitIndex;
+                        // unsigned int nHitsAdded = 0;
+                        // for (trackingRecHit_iterator hit = recoTrack.recHitsBegin(); hit != recoTrack.recHitsEnd(); ++hit, ++hitIndex) {
+                        //     hitsCollection->push_back((*hit)->clone());
+                        //     ++nHitsAdded;
+                        // }
+
+                        // trackExtra_acts.setHits(hitsCollection.get(), firstHitIndex, nHitsAdded);
+                        // iEvent.put(std::move(hitsCollection));
+
 
                         // ===== Assign TrackResiduals to the TrackExtra =====
                         reco::TrackResiduals TrackRes_acts;
@@ -854,10 +898,7 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
                                 TrackRes_acts.setPullXY(idx, pullX, pullY);
                                 idx += 1;
 
-                                // std::cout << "resX " << resX  << std::endl;
-                                // std::cout << "pullX " << pullX  << std::endl;
-                                // std::cout << "resY " << resY  << std::endl;
-                                // std::cout << "pullY " << pullY  << std::endl;   
+                                // std::cout << "resX: " << resX << ", pullX: " << pullX  << ", resY: " << resY << ", pullY: " << pullY << std::endl;
                             }
                         }
                         trackExtra_acts.setResiduals(TrackRes_acts);
@@ -866,6 +907,8 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
 
                         ExtraColl->push_back(trackExtra_acts);
                         TracksColl->push_back(recoTrack_acts);
+                        // TEMPORARY (related to the inner and outer detID match)
+                        TracksColl_CMSSW->push_back(recoTrack);
 
                         // Save the hit collection in the event:
                         //iEvent.put(std::move(hitsCollection), "actsRecHits");
@@ -883,6 +926,7 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
             std::cout << "################################################################################################ " << std::endl;
         }
     }
+
     edm::OrphanHandle<reco::TrackExtraCollection> ExtraHandle = iEvent.put(std::move(ExtraColl));
 
     for (long unsigned int k = 0; k < TracksColl->size(); k++) {
@@ -890,7 +934,8 @@ void ACTSRefitTracksProducer::produce(edm::Event& iEvent, const edm::EventSetup&
         (*TracksColl)[k].setExtra(theTrackExtraRef);
     }
 
-    iEvent.put(std::move(TracksColl));
+    iEvent.put(std::move(TracksColl), "recoTracksCollACTS");
+    iEvent.put(std::move(TracksColl_CMSSW), "recoTracksCollCMSSW");
 }
 
 

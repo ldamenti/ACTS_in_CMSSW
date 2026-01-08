@@ -16,7 +16,9 @@
 
 class ACTSTrackerGeometryRecord
     : public edm::eventsetup::DependentRecordImplementation<ACTSTrackerGeometryRecord,
-                                                            edm::mpl::Vector<TrackerDigiGeometryRecord> > {
+                                                            edm::mpl::Vector<TrackerDigiGeometryRecord,
+                                                                             TrackerTopologyRcd,
+                                                                             TrackerAlignmentRcd> > {
 };
 
 #endif /* RECORDS_ACTSTRACKERGEOMETRYRECORD_H */

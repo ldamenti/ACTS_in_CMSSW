@@ -46,7 +46,7 @@ class FromCMSSWtoACTS_hits {
 };
 
 
-FromCMSSWtoACTS_hits::FromCMSSWtoACTS_hits(HitsInfo hits_info, DetElVect detEl_vec)
+inline FromCMSSWtoACTS_hits::FromCMSSWtoACTS_hits(HitsInfo hits_info, DetElVect detEl_vec)
     : hits_info_(hits_info),
       detEl_vec_(detEl_vec){
     for(const auto& detEl : detEl_vec_){
@@ -54,7 +54,7 @@ FromCMSSWtoACTS_hits::FromCMSSWtoACTS_hits(HitsInfo hits_info, DetElVect detEl_v
     }
 }
 
-std::vector<Acts::SourceLink> FromCMSSWtoACTS_hits::convert() {
+inline std::vector<Acts::SourceLink> FromCMSSWtoACTS_hits::convert() {
 
     std::vector<Acts::SourceLink> sl_vector;
 
@@ -64,7 +64,7 @@ std::vector<Acts::SourceLink> FromCMSSWtoACTS_hits::convert() {
 
         // ==== Hit type ====
         if(hits_info_.hit_type[i] == 1 || hits_info_.hit_type[i] == 2){
-            std::cout << "PIXEL -> local x: " << hits_info_.loc_x[i] << "+-"<< "; local y: " << hits_info_.loc_y[i] << std::endl;
+            // std::cout << "[DEBUG] PIXEL -> local x: " << hits_info_.loc_x[i] << "+-"<< "; local y: " << hits_info_.loc_y[i] << std::endl;
             DetLink.hitType = HitType::Hit2D; // 2D
             // ==== Position ====
             DetLink.lPos[0] = hits_info_.loc_x[i];
@@ -72,15 +72,21 @@ std::vector<Acts::SourceLink> FromCMSSWtoACTS_hits::convert() {
             // ==== Covariance ====
             DetLink.lCov << pow(hits_info_.loc_x_err[i],2), 0,  
                                                         0, pow(hits_info_.loc_y_err[i],2);
+            // DetLink.lCov << hits_info_.loc_x_err[i], 0,  
+            //                                             0, hits_info_.loc_y_err[i];
+            
         } else {
-            std::cout << "STRIP -> local x: " << hits_info_.loc_x[i] << "; local y: " << hits_info_.loc_y[i] << std::endl;
+            // std::cout << "[DEBUG] STRIP -> local x: " << hits_info_.loc_x[i] << "; local y: " << hits_info_.loc_y[i] << std::endl;
             DetLink.hitType = HitType::Hit1D; // 1D
             // ==== Position ====
             DetLink.lPos[0] = hits_info_.loc_x[i];
+            DetLink.lPos[1] = hits_info_.loc_y[i];
 
             // ==== Covariance ====
-            DetLink.lCov << pow(hits_info_.loc_x_err[i],2), 0,
-                                                        0, 0;
+            DetLink.lCov << pow(hits_info_.loc_x_err[i],2), 0, 
+                                                        0,  0;
+            // DetLink.lCov << hits_info_.loc_x_err[i], 0,
+            //                                       0,  0;
         }
 
         // ==== Surface ====

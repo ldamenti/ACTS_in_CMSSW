@@ -1,0 +1,2 @@
+ALL_PACKAGES += DQM/SiStripCommon
+subdirs_src_DQM_SiStripCommon := src_DQM_SiStripCommon_python src_DQM_SiStripCommon_src src_DQM_SiStripCommon_test

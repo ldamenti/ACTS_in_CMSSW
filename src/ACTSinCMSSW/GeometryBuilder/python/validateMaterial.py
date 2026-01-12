@@ -20,8 +20,8 @@ fileRecords = [
 
 # The plot records
 plotRecords = [
-    PlotRecord("v_eta", "t_X0", (-4.0, 4.0), 80, "η", "tX0_vs_eta.svg"),
-    PlotRecord("v_phi", "t_X0", (-math.pi, math.pi), 72, "φ", "tX0_vs_phi.svg"),
+    PlotRecord("v_eta", "t_X0", (-4.0, 4.0), 80, "η", "tX0_vs_eta_New.svg"),
+    PlotRecord("v_phi", "t_X0", (-math.pi, math.pi), 72, "φ", "tX0_vs_phi_New.svg"),
 ]
 
 # Different plot records

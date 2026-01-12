@@ -1,0 +1,22 @@
+{
+  "EXPORT": {
+    "LIB": [
+      "ValidationRecoTrack"
+    ]
+  },
+  "LIB": [
+    "MathMore"
+  ],
+  "NAME": "ValidationRecoTrack",
+  "USE": [
+    "DQMServices/Core",
+    "SimDataFormats/TrackingAnalysis",
+    "DataFormats/TrackReco",
+    "root",
+    "SimTracker/TrackAssociation",
+    "SimTracker/TrackerHitAssociation",
+    "DQM/SiStripCommon",
+    "CalibTracker/Records",
+    "RecoTracker/TkSeedingLayers"
+  ]
+}

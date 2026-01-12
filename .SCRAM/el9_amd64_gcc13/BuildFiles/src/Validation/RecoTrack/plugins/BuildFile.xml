@@ -1,0 +1,45 @@
+{
+  "BUILDPRODUCTS": {
+    "LIBRARY": {
+      "ValidationRecoTrackPlugins": {
+        "FILES": "*.cc",
+        "FLAGS": {
+          "EDM_PLUGIN": [
+            "1"
+          ]
+        },
+        "TYPE": "lib"
+      }
+    }
+  },
+  "LIB": [
+    "MathMore"
+  ],
+  "USE": [
+    "FWCore/Utilities",
+    "FWCore/Framework",
+    "CommonTools/UtilAlgos",
+    "DataFormats/Common",
+    "DataFormats/TrackReco",
+    "clhep",
+    "SimDataFormats/TrackerDigiSimLink",
+    "FWCore/ParameterSet",
+    "Geometry/TrackerGeometryBuilder",
+    "Geometry/Records",
+    "MagneticField/Records",
+    "MagneticField/Engine",
+    "SimDataFormats/Vertex",
+    "SimDataFormats/TrackingAnalysis",
+    "SimDataFormats/PileupSummaryInfo",
+    "SimDataFormats/EncodedEventId",
+    "root",
+    "SimGeneral/TrackingAnalysis",
+    "SimTracker/TrackAssociation",
+    "SimTracker/TrackerHitAssociation",
+    "SimTracker/TrackHistory",
+    "Validation/RecoTrack",
+    "RecoTracker/PixelTrackFitting",
+    "DataFormats/VertexReco",
+    "DataFormats/Phase2TrackerCluster"
+  ]
+}

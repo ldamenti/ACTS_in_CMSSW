@@ -20,4 +20,9 @@ echo "===== Running Chi2 Comparison ====="
 ./compareChi2.py
 mv -f CompareChi2 "$RES_DIR"
 
+# ===== 2D Maps Comparison =====
+echo "===== Running 2D maps Comparison ====="
+./compare2Dmaps.py
+mv -f Compare2Dmaps "$RES_DIR"
+
 # ADD HERE SOMETHING ELSE 

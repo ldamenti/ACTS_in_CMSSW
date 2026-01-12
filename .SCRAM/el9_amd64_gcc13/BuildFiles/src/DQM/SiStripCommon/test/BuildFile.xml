@@ -1,0 +1,46 @@
+{
+  "BUILDPRODUCTS": {
+    "BIN": {
+      "test_SiStripHitId": {
+        "COMMAND": "cmsRun ${LOCALTOP}/src/DQM/SiStripCommon/test/testSiStripHistId_cfg.py",
+        "TYPE": "test"
+      },
+      "test_TkHistoMap": {
+        "COMMAND": "cmsRun ${LOCALTOP}/src/DQM/SiStripCommon/test/testTkHistoMap_cfg.py",
+        "TYPE": "test"
+      }
+    },
+    "LIBRARY": {
+      "testSiStripHistId": {
+        "FILES": "plugins/testSiStripHistId.cc",
+        "FLAGS": {
+          "EDM_PLUGIN": [
+            "1"
+          ]
+        },
+        "TYPE": "lib"
+      },
+      "testTkHistoMap": {
+        "FILES": "plugins/testTkHistoMap.cc",
+        "FLAGS": {
+          "EDM_PLUGIN": [
+            "1"
+          ]
+        },
+        "TYPE": "lib",
+        "USE": [
+          "Geometry/TrackerGeometryBuilder",
+          "Geometry/Records",
+          "root",
+          "rootgraphics"
+        ]
+      }
+    }
+  },
+  "USE": [
+    "DQM/SiStripCommon",
+    "FWCore/Framework",
+    "DQMServices/Core",
+    "boost"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "EXPORT": {
+    "LIB": [
+      "1"
+    ]
+  },
+  "NAME": "DQMSiStripCommon",
+  "USE": [
+    "DataFormats/SiStripDetId",
+    "DataFormats/DetId",
+    "DataFormats/SiStripDigi",
+    "DataFormats/Common",
+    "CalibTracker/SiStripCommon",
+    "CommonTools/TrackerMap",
+    "DQMServices/Core",
+    "FWCore/MessageLogger",
+    "FWCore/Utilities",
+    "FWCore/ServiceRegistry",
+    "boost",
+    "rootgraphics"
+  ]
+}

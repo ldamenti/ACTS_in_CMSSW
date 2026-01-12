@@ -1,0 +1,77 @@
+{
+  "BUILDPRODUCTS": {
+    "BIN": {
+      "DMRmerge": {
+        "FILES": "DMRmerge.cc,Options.cc",
+        "TYPE": "bin"
+      },
+      "DMRtrends": {
+        "FILES": "DMRtrends.cc,Options.cc",
+        "TYPE": "bin"
+      },
+      "DiMuonVmerge": {
+        "FILES": "DiMuonVmerge.cc,Options.cc",
+        "TYPE": "bin"
+      },
+      "GCP": {
+        "FILES": "GCP.cc,Options.cc",
+        "TYPE": "bin"
+      },
+      "GCPtrends": {
+        "FILES": "GCPtrends.cc",
+        "TYPE": "bin"
+      },
+      "GenericVmerge": {
+        "FILES": "GenericVmerge.cc,Options.cc",
+        "TYPE": "bin"
+      },
+      "MTSmerge": {
+        "FILES": "MTSmerge.cc,Options.cc",
+        "TYPE": "bin"
+      },
+      "PVmerge": {
+        "FILES": "PVmerge.cc,Options.cc",
+        "TYPE": "bin"
+      },
+      "PVtrends": {
+        "FILES": "PVtrends.cc,Options.cc",
+        "TYPE": "bin"
+      },
+      "SplitVmerge": {
+        "FILES": "SplitVmerge.cc,Options.cc",
+        "TYPE": "bin"
+      },
+      "Zmumumerge": {
+        "FILES": "Zmumumerge.cc,Options.cc",
+        "TYPE": "bin"
+      },
+      "haddws": {
+        "FILES": "haddws.C",
+        "TYPE": "bin"
+      },
+      "jetHtPlotter": {
+        "FILES": "jetHtPlotter.cc,JetHtPlotConfiguration.cc,Options.cc",
+        "TYPE": "bin"
+      }
+    }
+  },
+  "FLAGS": {
+    "CXXFLAGS": [
+      "-g -O3 -lASImage -lMultiProc"
+    ]
+  },
+  "LIB": [
+    "stdc++fs"
+  ],
+  "USE": [
+    "Alignment/OfflineValidation",
+    "boost",
+    "boost_filesystem",
+    "boost_program_options",
+    "boost_system",
+    "roofit",
+    "rootcore",
+    "rootgraphics",
+    "rootmath"
+  ]
+}

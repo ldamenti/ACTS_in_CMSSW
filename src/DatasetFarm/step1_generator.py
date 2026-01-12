@@ -30,13 +30,13 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 #########################################
 # SET GENERATOR PARAMETERS              #
 nParticles = 1000
-energy = 100                            # GeV
-EtaRange = [-1, 1]                  
+energy = 5                            # GeV
+EtaRange = [-2.5, 2.5]                  
 PhiRange = [-3.14159, 3.14159]
 AddAntiP = False 
 pID = 13                                # 13 = muNeg and -13 = muPos
 globalPath = '/eos/user/l/ldamenti/DatasetFarm_files/'
-filename = 'step1_Np1k_E100GeV_muNeg_BarrOnly.root'
+filename = 'step1_Np1k_E5GeV_muNeg.root'
 #########################################
 
 process.maxEvents = cms.untracked.PSet(

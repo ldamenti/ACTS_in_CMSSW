@@ -1,0 +1,48 @@
+{
+  "BUILDPRODUCTS": {
+    "LIBRARY": {
+      "GeometryBuilder": {
+        "FILES": "*.cc",
+        "FLAGS": {
+          "EDM_PLUGIN": [
+            "1"
+          ]
+        },
+        "TYPE": "lib"
+      }
+    }
+  },
+  "USE": [
+    "FWCore/Framework",
+    "FWCore/ParameterSet",
+    "FWCore/Utilities",
+    "FWCore/MessageLogger",
+    "Geometry/TrackerGeometryBuilder",
+    "Geometry/CommonDetUnit",
+    "Geometry/Records",
+    "DataFormats/TrackerCommon",
+    "DataFormats/TrackerRecHit2D",
+    "DataFormats/SiStripDetId",
+    "DataFormats/GeometrySurface",
+    "FWCore/Framework",
+    "FWCore/ParameterSet",
+    "FWCore/MessageLogger",
+    "CondFormats/SiStripObjects",
+    "DetectorDescription/Core",
+    "ACTSinCMSSW/GeometryDataFormat",
+    "MagneticField/Engine",
+    "MagneticField/Records",
+    "SimDataFormats/TrackingAnalysis",
+    "SimGeneral/TrackingAnalysis",
+    "SimGeneral/MixingModule",
+    "RecoTracker/TransientTrackingRecHit",
+    "RecoTracker/TrackProducer",
+    "FWCore/PluginManager",
+    "FWCore/ServiceRegistry",
+    "rootcore",
+    "acts-core",
+    "acts-json",
+    "acts-svg",
+    "acts-root"
+  ]
+}

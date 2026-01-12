@@ -1,0 +1,2 @@
+ALL_PACKAGES += DQM/TrackerMonitorTrack
+subdirs_src_DQM_TrackerMonitorTrack := src_DQM_TrackerMonitorTrack_python src_DQM_TrackerMonitorTrack_src src_DQM_TrackerMonitorTrack_test

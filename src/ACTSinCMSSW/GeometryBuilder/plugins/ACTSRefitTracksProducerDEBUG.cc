@@ -582,6 +582,8 @@ private:
 
     int hitIndex = 0;
 
+    int trackCount = 0;
+
     // Summary Parameters:
     double TotTrueParticles = 0;
     double TotCMSSW_Matched = 0;
@@ -661,11 +663,11 @@ reco::Track::CovarianceMatrix convertCovACTStoCMSSW(const std::vector<double> ac
     //         Cacts(j,i) *= scale;
     //     }
     // }
-    Eigen::Matrix<double,5,5> S = Eigen::Matrix<double,5,5>::Identity();
-    S(Acts::eBoundLoc0, Acts::eBoundLoc0) = 0.1;
-    S(Acts::eBoundLoc1, Acts::eBoundLoc1) = 0.1;
+    // Eigen::Matrix<double,5,5> S = Eigen::Matrix<double,5,5>::Identity();
+    // S(Acts::eBoundLoc0, Acts::eBoundLoc0) = 0.1;
+    // S(Acts::eBoundLoc1, Acts::eBoundLoc1) = 0.1;
 
-    Cacts = S * Cacts * S;
+    // Cacts = S * Cacts * S;
 
 
     // ===============================
@@ -674,29 +676,29 @@ reco::Track::CovarianceMatrix convertCovACTStoCMSSW(const std::vector<double> ac
     // Note: ACTS uses mm, CMSSW cm → let's divide l0,l1 per 10
     double l0    = actsParams[0];
     double l1    = actsParams[1];
-    double phi   = actsParams[2];
-    double theta = actsParams[3];
+    // double phi   = actsParams[2];
+    // double theta = actsParams[3];
 
-    double lambda = M_PI/2.0 - theta; // CMSSW uses lambda = pi/2 - theta
+    // double lambda = M_PI/2.0 - theta; // CMSSW uses lambda = pi/2 - theta
 
     // ===============================
     // Step 3: Transform local → global coordinates
     // ===============================
     // Tenstativo 2
-    Acts::Vector3 fitted_pos = pSurface->localToGlobal(Acts::GeometryContext{}, Acts::Vector2(l0, l1), fitted_dir);
-    double x = fitted_pos[0] / 10.0;
-    double y = fitted_pos[1] / 10.0;
-    double z = fitted_pos[2] / 10.0;
+    // Acts::Vector3 fitted_pos = pSurface->localToGlobal(Acts::GeometryContext{}, Acts::Vector2(l0, l1), fitted_dir);
+    // double x = fitted_pos[0] / 10.0;
+    // double y = fitted_pos[1] / 10.0;
+    // double z = fitted_pos[2] / 10.0;
 
-    double eps = 1e-3; // mm
-    Acts::Vector2 loc0_shift = {l0 + eps,        l1};
-    Acts::Vector2 loc1_shift = {l0      , l1 + eps};
+    // double eps = 1e-3; // mm
+    // Acts::Vector2 loc0_shift = {l0 + eps,        l1};
+    // Acts::Vector2 loc1_shift = {l0      , l1 + eps};
 
-    Acts::Vector3 pos0 = pSurface->localToGlobal(Acts::GeometryContext{}, loc0_shift, fitted_dir);
-    Acts::Vector3 pos1 = pSurface->localToGlobal(Acts::GeometryContext{}, loc1_shift, fitted_dir);
+    // Acts::Vector3 pos0 = pSurface->localToGlobal(Acts::GeometryContext{}, loc0_shift, fitted_dir);
+    // Acts::Vector3 pos1 = pSurface->localToGlobal(Acts::GeometryContext{}, loc1_shift, fitted_dir);
 
-    Acts::Vector3 u = (pos0 - fitted_pos) / eps; // derivata ∂x/∂loc0
-    Acts::Vector3 v = (pos1 - fitted_pos) / eps; // derivata ∂x/∂loc1
+    // Acts::Vector3 u = (pos0 - fitted_pos) / eps; // derivata ∂x/∂loc0
+    // Acts::Vector3 v = (pos1 - fitted_pos) / eps; // derivata ∂x/∂loc1
 
     // Tentativo 1
     // auto rot = (pSurface->transform(Acts::GeometryContext{})).rotation();
@@ -726,16 +728,41 @@ reco::Track::CovarianceMatrix convertCovACTStoCMSSW(const std::vector<double> ac
     // --- phi ---
     J(2, Acts::eBoundPhi) = 1.0;
 
+    // ACTS perigee parameters
+    Acts::Vector3 fitted_pos = pSurface->localToGlobal(Acts::GeometryContext{}, Acts::Vector2(l0, l1), fitted_dir);
+    double x = fitted_pos[0] / 10.; // mm -> cm
+    double y = fitted_pos[1] / 10.;
+    double z = fitted_pos[2] / 10.;
+
+    // angles
+    double phi   = actsParams[2];
+    double lambda = M_PI/2. - actsParams[3]; // theta -> lambda
+
+    // Jacobiana: finite differences oppure formule analitiche
+    // dxy = -x*sin(phi) + y*cos(phi)
+    J(3, Acts::eBoundLoc0) = 0.1; // se loc0 ~ x
+
+    // dsz = z - (x*cos(phi) + y*sin(phi))/tan(lambda)
+    double cotL = 1./tan(lambda);
+    J(4, Acts::eBoundLoc0) = -cos(phi) * cotL * 0.1;
+    J(4, Acts::eBoundLoc1) = -sin(phi) * cotL * 0.1;
+    J(4, Acts::eBoundTheta) = (x*cos(phi) + y*sin(phi)) / (sin(lambda)*sin(lambda)); // derivata rispetto a lambda
+
+    // dxy = d0 [mm → cm]
+    // J(3, Acts::eBoundLoc0) = 0.1;
+    // dsz = z0 [mm → cm]
+    //J(4, Acts::eBoundLoc1) = 0.1;
+
     // --- dxy ---
-    J(3, Acts::eBoundLoc0) = -(u.x()*sin(phi) - u.y()*cos(phi));
-    J(3, Acts::eBoundLoc1) = -(v.x()*sin(phi) - v.y()*cos(phi));
-    J(3, Acts::eBoundPhi) = -(x*cos(phi) + y*sin(phi));
+    // J(3, Acts::eBoundLoc0) = -(u.x()*sin(phi) - u.y()*cos(phi));
+    // J(3, Acts::eBoundLoc1) = -(v.x()*sin(phi) - v.y()*cos(phi));
+    // J(3, Acts::eBoundPhi) = -(x*cos(phi) + y*sin(phi));
 
     // --- dsz ---
-    J(4, Acts::eBoundLoc0) = cos(lambda)*u.z() - sin(lambda)*(u.x()*cos(phi) + u.y()*sin(phi));
-    J(4, Acts::eBoundLoc1) = cos(lambda)*v.z() - sin(lambda)*(v.x()*cos(phi) + v.y()*sin(phi));
-    J(4, Acts::eBoundPhi)  = -sin(lambda)*(-x*sin(phi) + y*cos(phi));
-    J(4, Acts::eBoundTheta)= -(x*cos(phi) + y*sin(phi))*cos(lambda) - z*sin(lambda);
+    // J(4, Acts::eBoundLoc0) = cos(lambda)*u.z() - sin(lambda)*(u.x()*cos(phi) + u.y()*sin(phi));
+    // J(4, Acts::eBoundLoc1) = cos(lambda)*v.z() - sin(lambda)*(v.x()*cos(phi) + v.y()*sin(phi));
+    // J(4, Acts::eBoundPhi)  = -sin(lambda)*(-x*sin(phi) + y*cos(phi));
+    // J(4, Acts::eBoundTheta)= -(x*cos(phi) + y*sin(phi))*cos(lambda) - z*sin(lambda);
 
     // ===============================
     // Step 5: Tranform the covariance
@@ -771,6 +798,28 @@ reco::Track::CovarianceMatrix convertCovACTStoCMSSW(const std::vector<double> ac
     return cov_cmssw;
 }
 
+
+struct MaterialSurfaceSel : public Acts::TrackingGeometryMutableVisitor {
+  std::vector<Acts::Surface*> surfaces;
+  void visitSurface(Acts::Surface& surface) override {
+    if(surface.surfaceMaterial() != nullptr && !rangeContainsValue(surfaces, &surface)) {
+        surfaces.push_back(&surface);
+        auto C = surface.center(Acts::GeometryContext{});
+        auto R = std::sqrt(C[0]*C[0] + C[1]*C[1]);
+        auto Z = C[2];
+        
+        std::cout << "[Material Debug] Surface " << surface.geometryId() << " has material!" 
+                  << " center: Z = " << Z << " R = " << R 
+                  << " type: " << surface.type() << " bounds = ";
+
+        for (double v : surface.bounds().values()) {
+            std::cout << v << " ";
+        }
+        std::cout << "" << std::endl;
+
+    }
+  }
+};
 
 // reco::Track::CovarianceMatrix convertCovACTStoCMSSW(reco::Track::CovarianceMatrix& cov_acts){
 
@@ -845,7 +894,7 @@ void ACTSRefitTracksProducerDEBUG::produce(edm::Event& iEvent, const edm::EventS
     }
 
 
-    bool verbose = true;
+    bool verbose = false;
 
     // ===== Define the global hits collection =====
     auto allHitsCollection = std::make_unique<TrackingRecHitCollection>();
@@ -899,15 +948,15 @@ void ACTSRefitTracksProducerDEBUG::produce(edm::Event& iEvent, const edm::EventS
         edm::LogError("ACTSRefitTracksProducerDEBUG") << "ACTS TrackerGeometry is nullptr!";
         return;  
     }
+    // DEBUG: look for surfaces with material:
+    // MaterialSurfaceSel myVis;
+    // ACTStrackingGeom->apply(myVis);
+
     // DEBUG: loop on detEl to get surface info:
     std::ofstream outF("DetEl_Info.txt");
     Acts::GeometryContext local_gCtx;
     for(auto detEl : detEls){
         auto surf = (*detEl).surface().getSharedPtr();
-        // Get Material Info:
-        if(surf && surf->surfaceMaterial()){
-            std::cout << "Surface has Material " << std::endl;
-        }
         auto globalPos = surf->localToGlobal(local_gCtx, Acts::Vector2(0, 0), Acts::Vector3(0,0,0));
         auto detId = (*detEl).detID();
         auto subDet = (*detEl).subDetector();
@@ -989,7 +1038,6 @@ void ACTSRefitTracksProducerDEBUG::produce(edm::Event& iEvent, const edm::EventS
     // outF_B.close();
 
 
-
     Acts::EigenStepper<> es(magFieldPtr);
     // *** NAVIGATOR ***
     Acts::Navigator::Config navi_cfg;
@@ -997,9 +1045,9 @@ void ACTSRefitTracksProducerDEBUG::produce(edm::Event& iEvent, const edm::EventS
     navi_cfg.resolveSensitive = true;
     navi_cfg.resolveMaterial = true;
     navi_cfg.resolvePassive = true;
-    std::shared_ptr<const Acts::Logger> navi_logger = Acts::getDefaultLogger("Navigator", Acts::Logging::Level::VERBOSE);
+    std::shared_ptr<const Acts::Logger> navi_logger = Acts::getDefaultLogger("Navigator", Acts::Logging::Level::INFO);
     Acts::Navigator navi(navi_cfg, std::move(navi_logger));
-    std::shared_ptr<const Acts::Logger> prop_logger = Acts::getDefaultLogger("Propagator", Acts::Logging::Level::VERBOSE);
+    std::shared_ptr<const Acts::Logger> prop_logger = Acts::getDefaultLogger("Propagator", Acts::Logging::Level::INFO);
     // *** PROPAGATOR ***
     Acts::Propagator prop(es, navi, std::move(prop_logger));
 
@@ -1030,18 +1078,30 @@ void ACTSRefitTracksProducerDEBUG::produce(edm::Event& iEvent, const edm::EventS
 
         // Loop over all the track pointer
         for (const auto& trackRef : trackRefs) {
+            trackCount += 1;
+
+            // ===== Get the Reco Track =====
+            const reco::Track& recoTrack = *trackRef;
+
+            // ===== Increasing the total number of particle analyzed =====
             TotTrueParticles += 1;
-            // Find the pointer association into the map:
+
+            // ===== Select only the Endcap region =====
+            // if(recoTrack.eta() < 0.8 && recoTrack.eta() > -0.8){
+            //     continue;
+            // }
+
+            // ===== Is this reco::Track associated with a TP? =====
             auto found = recoToSim.find(trackRef);
-            // Look for the association:
             if (found != recoToSim.end() && !found->val.empty()) {
+                std::cout << "[Association] Reco Track associated with a TP" << std::endl;
                 TotCMSSW_Matched += 1;
+                // Get (and eventually print) the TP info
                 const auto& tpPair = found->val.front();
                 const TrackingParticleRef& tpRef = tpPair.first;
                 math::XYZTLorentzVectorD p4 = tpRef->p4();
                 auto V = tpRef->vertex();
                 double quality = tpPair.second;
-
                 if (verbose){
                     std::cout << "===== Reco track associated to a Tracking Particle: =====" << std::endl;
                     std::cout << "px: " << p4.px() << "; py: " << p4.py() << "; pz: " << p4.pz() << "; Energy: " << p4.energy() << std::endl;
@@ -1049,713 +1109,696 @@ void ACTSRefitTracksProducerDEBUG::produce(edm::Event& iEvent, const edm::EventS
                     std::cout << "Eta: " << tpRef->eta() << "; Phi: " << tpRef->phi() << std::endl;
                     std::cout << "Mass: " << tpRef->mass() << "; Charge: " << tpRef->charge() << "; ParticleID: " << tpRef->pdgId() << "; Quality: " << quality << std::endl;
                 }
+            }
+            else {
+                std::cout << "[Association] WARNING: Reco Track NOT associated with a TP" << std::endl;
+            }
+            // ===== Get (and eventually print) the parameters of the Reco::Track =====
+            Eigen::Vector4d pos4(recoTrack.vertex().x(),  recoTrack.vertex().y(),  recoTrack.vertex().z(), 0.0);
+            auto phi = recoTrack.phi();
+            auto eta = recoTrack.eta();
+            auto theta =  2 * std::atan(std::exp(-eta));
+            Eigen::Vector3d dir(std::cos(phi) * std::sin(theta), std::sin(phi) * std::sin(theta), std::cos(theta));
+            auto qoverP = recoTrack.qoverp(); 
+            auto covariance = recoTrack.covariance();
+            int particleID = 0;
+            if(found != recoToSim.end() && !found->val.empty()) {
+                const auto& tpPair = found->val.front();
+                const TrackingParticleRef& tpRef = tpPair.first;
+                particleID = tpRef->pdgId();
+            }
+            pdgID = particleID;
+            if(verbose) {
+                std::cout << "==== Parameters of the RECO Track: ==== " << std::endl;
+                std::cout << "4D Position (x, y, z, t): " << pos4[0]*10 << " " << pos4[1]*10 << " " << pos4[2]*10 << " " << pos4[3] << " " << std::endl; // X, Y, Z, T  (from cm to mm)
+                std::cout << "3D Direction: " << dir.x() << " " << dir.y() << " " << dir.z() << std::endl;
+                std::cout << "qoverP: " << qoverP << std::endl;
+                std::cout << "covariance: " << covariance << std::endl;
+                std::cout << "chi2: " << recoTrack.chi2() << std::endl;
+                std::cout << "ndof: " << recoTrack.ndof() << std::endl;
+                std::cout << "chi2 / ndof = " << recoTrack.chi2() / recoTrack.ndof()<< std::endl;
+                std::cout << "Particle ID = " << pdgID << std::endl;
+            }
 
-                // if(tpRef->eta() > 0.8 || tpRef->eta() < -0.8){
-                //     std::cout << "[WARNING] Eta out of range. Continuing..." << std::endl;
-                //     continue;
+            /// NOTE: Even if an association is not found, we still continue, as we want to verify
+            //  whether the ACTS re-fit performance is better than the CMSSW one.
+
+            // LOOP OVER THE HITS:
+            int h_type = 0;
+            const PixelClusterParameterEstimator* pixelCPE = &iSetup.getData(cpeToken_);
+            const StripClusterParameterEstimator* stripCPE = &iSetup.getData(stripCpeToken_);
+
+            int hitCount_cmssw = 0;
+
+            // unsigned firstH = hitsCollection->size();
+            std::ofstream outF_cmssw("DetEl_CMSSWInfo.txt", std::ios::app);
+            std::cout << "CMSSW Hits: " << std::endl;
+            for (const auto& hit : recoTrack.recHits()) {
+
+                // processHitNew(hit);
+
+                // save the hit in a collection to be pushed than in the event:
+                // hitsCollection->push_back(hit->clone());
+                hitCount_cmssw += 1;
+                DetId detId = hit->geographicalId();
+                const GeomDet* geomDet = trackerGeometry->idToDet(detId);
+                if (!geomDet) continue;
+
+                unsigned int IntSubDetID = (detId.subdetId());
+
+                // PixelBarrel = 1; PixelEndcap = 2; TIB = 3; TID = 4; TOB = 5; TEC = 6;
+                h_type = IntSubDetID;
+
+                LocalHitPosition pos = processHitDEBUG(hit, pixelCPE, stripCPE, trackerGeometry);
+                LocalPoint localP(pos.x, pos.y);
+                const GeomDetUnit& detUnit = *(hit->detUnit());
+                GlobalPoint pos_global = detUnit.surface().toGlobal(localP);
+
+                double X_mm;
+                double Xerr_mm;
+                double Y_mm; 
+                double Yerr_mm;
+
+                X_mm = pos.x * 10;
+                Xerr_mm = pos.x_err * 10;
+                Y_mm = pos.y * 10;
+                Yerr_mm = pos.y_err* 10;
+
+                // Skip dummy modules (?)
+                // std::string topoName = typeid(detUnit.type().topology()).name();
+                // if(topoName.find("DummyTopology") != std::string::npos) continue;
+
+                // if (IntSubDetID == StripSubdetector::TIB){
+                //     std::cout << "TIB module along track: layer = " << tTopo.tibLayer(detId) 
+                //             << "; side = " << tTopo.tibSide(detId) 
+                //             << "; Order = " << tTopo.tibOrder(detId)
+                //             << "; IsDoubleSide = " << tTopo.tibIsDoubleSide(detId)
+                //             << "; IsStereo = " << tTopo.tibIsStereo(detId)
+                //             << "; IsRPhi = " << tTopo.tibIsRPhi(detId)
+                //             << "; InternalString = " << tTopo.tibIsInternalString(detId)
+                //             << "; ExternalString = " << tTopo.tibIsExternalString(detId)
+                //             << "; Glued = " << tTopo.tibGlued(detId) << std::endl;
+
+                //     // const RectangularStripTopology& topol = dynamic_cast<const RectangularStripTopology&>(detUnit.type().topology());
+                //     // float stripLength = topol.localStripLength(hit->localPosition());
+
+
+                //     // X_mm = pos.x * 10;
+                //     // Xerr_mm = pos.x_err * 10;
+                //     // Y_mm = (stripLength / 2) * 10;
+                //     // Yerr_mm = (stripLength * 10) / std::sqrt(12.0f);
+                //     X_mm = pos.x * 10;
+                //     Xerr_mm = pos.x_err * 10;
+                //     Y_mm = pos.y * 10;
+                //     Yerr_mm = pos.y_err* 10;
                 // }
-                //std::vector<double> p4_V4{p4.px(), p4.py(), p4.pz(), p4.energy()};
-                //P_and_E.push_back(p4);
-                //std::vector<double> vtx_V3{V.x(), V.y(), V.z()};
-                
-                P_and_E = {p4.px(), p4.py(), p4.pz(), p4.energy()};
-                vertex = {V.x()*10, V.y()*10, V.z()*10};
-                Eta_ = tpRef->eta();
-                Phi_ = tpRef->phi();
-                Mass_ = tpRef->mass();
-                Charge_ = tpRef->charge();
-                ParticleID_ = tpRef->pdgId();
-                Quality_ = quality;
+                // else if (IntSubDetID == StripSubdetector::TOB){
+                //     std::cout << "TOB module along track: layer = " << tTopo.tobLayer(detId) 
+                //             << "; side = " << tTopo.tobSide(detId)
+                //             << "; Rod = " << tTopo.tobRod(detId)
+                //             << "; IsDoubleSide = " << tTopo.tobIsDoubleSide(detId)
+                //             << "; IsStereo = " << tTopo.tobIsStereo(detId)
+                //             << "; IsRPhi = " << tTopo.tobIsRPhi(detId)
+                //             << "; Glued = " << tTopo.tobGlued(detId) << std::endl;
 
-                const reco::Track& recoTrack = *trackRef;
-            
-                // Needed prpperties: phi, eta, q/P, particle hypotesis, covariance matrix
-                Eigen::Vector4d pos4(recoTrack.vertex().x(),  recoTrack.vertex().y(),  recoTrack.vertex().z(), 0.0);
-                auto phi = recoTrack.phi();
-                auto eta = recoTrack.eta();
-                auto theta =  2 * std::atan(std::exp(-eta));
-                Eigen::Vector3d dir(std::cos(phi) * std::sin(theta), std::sin(phi) * std::sin(theta), std::cos(theta));
-                auto qoverP = recoTrack.qoverp(); 
-                auto covariance = recoTrack.covariance();
-                int particleID = 0;
-                if(found != recoToSim.end() && !found->val.empty()) {
-                    const auto& tpPair = found->val.front();
-                    const TrackingParticleRef& tpRef = tpPair.first;
-                    particleID = tpRef->pdgId();
-                }
-                pdgID = particleID;
+                //     // const RectangularStripTopology& topol = dynamic_cast<const RectangularStripTopology&>(detUnit.type().topology());
+                //     // float stripLength = topol.localStripLength(hit->localPosition());
 
-                if(verbose) {
-                    std::cout << "==== Parameters of the RECO Track: ==== " << std::endl;
-                    std::cout << "4D Position (x, y, z, t): " << pos4[0]*10 << " " << pos4[1]*10 << " " << pos4[2]*10 << " " << pos4[3] << " " << std::endl; // X, Y, Z, T  (from cm to mm)
-                    std::cout << "3D Direction: " << dir.x() << " " << dir.y() << " " << dir.z() << std::endl;
-                    std::cout << "qoverP: " << qoverP << std::endl;
-                    std::cout << "covariance: " << covariance << std::endl;
-                    std::cout << "chi2: " << recoTrack.chi2() << std::endl;
-                    std::cout << "ndof: " << recoTrack.ndof() << std::endl;
-                    std::cout << "chi2 / ndof = " << recoTrack.chi2() / recoTrack.ndof()<< std::endl;
-                    std::cout << "Particle ID = " << pdgID << std::endl;
-                }
+                //     // X_mm = pos.x * 10;
+                //     // Xerr_mm = pos.x_err * 10;
+                //     // Y_mm = (stripLength / 2) * 10;
+                //     // Yerr_mm = (stripLength * 10) / std::sqrt(12.0f);
+                //     X_mm = pos.x * 10;
+                //     Xerr_mm = pos.x_err * 10;
+                //     Y_mm = pos.y * 10;
+                //     Yerr_mm = pos.y_err* 10;
+                // }
+                // else {
+                //     X_mm = pos.x * 10;
+                //     Xerr_mm = pos.x_err * 10;
+                //     Y_mm = pos.y * 10;
+                //     Yerr_mm = pos.y_err* 10;
+                // }
 
+                // if (IntSubDetID == StripSubdetector::TIB || IntSubDetID == StripSubdetector::TOB) {
 
-                pos4_vec = {pos4[0], pos4[1], pos4[2], pos4[3]};
-                dir3_vec = {dir.x(), dir.y(), dir.z()};
-                qoverP_vec = qoverP;
-                covariance_vec.resize(25);
-                // vector index = i * N_columns + j
-                for (int i = 0; i < 5; ++i) {
-                    for (int j = 0; j < 5; ++j) {
-                        covariance_vec[i*5 + j] = covariance(i,j);
-                    }
-                }
+                //     std::cout << "Before the cast. ID " << detId.rawId() << " Topology real type: " << typeid(detUnit.type().topology()).name() << std::endl;
 
-                // LOOP OVER THE HITS:
-                int h_type = 0;
-                const PixelClusterParameterEstimator* pixelCPE = &iSetup.getData(cpeToken_);
-                const StripClusterParameterEstimator* stripCPE = &iSetup.getData(stripCpeToken_);
+                //     const RectangularStripTopology& topol = dynamic_cast<const RectangularStripTopology&>(detUnit.type().topology());
 
-                int hitCount_cmssw = 0;
+                //     float stripLength = topol.localStripLength(hit->localPosition());
+                //     std::cout << "After cast" << std::endl;
 
-                // unsigned firstH = hitsCollection->size();
-                std::ofstream outF_cmssw("DetEl_CMSSWInfo.txt", std::ios::app);
-                std::cout << "CMSSW Hits: " << std::endl;
-                for (const auto& hit : recoTrack.recHits()) {
+                //     // std::cout << "Strip length: " << stripLength << std::endl;
+                //     X_mm = pos.x * 10;
+                //     Xerr_mm = pos.x_err * 10;
+                //     Y_mm = (stripLength / 2) * 10;
+                //     Yerr_mm = stripLength / std::sqrt(12.0f);
 
-                    // processHitNew(hit);
+                //     if (IntSubDetID == StripSubdetector::TIB) {
+                //         std::cout << "TIB HIT" << std::endl;
+                //         bool isStereo = tTopo.tibIsStereo(detId);
+                //         bool isDoubleSide = tTopo.tibIsDoubleSide(detId);
+                //         bool isRPhi = tTopo.tibIsRPhi(detId);
+                //         std::cout << "================================"<< std::endl;
+                //         std::cout << "is Stereo? " << isStereo << std::endl;
+                //         std::cout << "is isRPhi? " << isRPhi << std::endl;
+                //         std::cout << "is Double Side? " << isDoubleSide << std::endl;
+                //         std::cout << "Local Position: X-> " << pos.x << "; Y-> " << pos.y << std::endl;
+                //         std::cout << "================================"<< std::endl;
 
-                    // save the hit in a collection to be pushed than in the event:
-                    // hitsCollection->push_back(hit->clone());
-                    hitCount_cmssw += 1;
-                    DetId detId = hit->geographicalId();
-                    const GeomDet* geomDet = trackerGeometry->idToDet(detId);
-                    if (!geomDet) continue;
+                //         auto stereoSurf = detUnit.surface();
+                //         auto R = stereoSurf.rotation();
+                //         std::cout << "Z ELEMENT : " << R.zz() << std::endl;
+                //         // if(R.zz() < 0) {
+                //         //     X_mm = X_mm;
+                //         //     Y_mm = -1 * Y_mm;
+                //         //     std::cout << "[CORRECTED TIB HITS] X = " << X_mm << "; Y = " << Y_mm << std::endl;
+                //         // }
 
-                    unsigned int IntSubDetID = (detId.subdetId());
-
-                    // PixelBarrel = 1; PixelEndcap = 2; TIB = 3; TID = 4; TOB = 5; TEC = 6;
-                    h_type = IntSubDetID;
-
-                    LocalHitPosition pos = processHitDEBUG(hit, pixelCPE, stripCPE, trackerGeometry);
-                    LocalPoint localP(pos.x, pos.y);
-                    const GeomDetUnit& detUnit = *(hit->detUnit());
-                    GlobalPoint pos_global = detUnit.surface().toGlobal(localP);
-
-                    double X_mm;
-                    double Xerr_mm;
-                    double Y_mm; 
-                    double Yerr_mm;
-
-                    X_mm = pos.x * 10;
-                    Xerr_mm = pos.x_err * 10;
-                    Y_mm = pos.y * 10;
-                    Yerr_mm = pos.y_err* 10;
-
-                    // Skip dummy modules (?)
-                    // std::string topoName = typeid(detUnit.type().topology()).name();
-                    // if(topoName.find("DummyTopology") != std::string::npos) continue;
-
-                    // if (IntSubDetID == StripSubdetector::TIB){
-                    //     std::cout << "TIB module along track: layer = " << tTopo.tibLayer(detId) 
-                    //             << "; side = " << tTopo.tibSide(detId) 
-                    //             << "; Order = " << tTopo.tibOrder(detId)
-                    //             << "; IsDoubleSide = " << tTopo.tibIsDoubleSide(detId)
-                    //             << "; IsStereo = " << tTopo.tibIsStereo(detId)
-                    //             << "; IsRPhi = " << tTopo.tibIsRPhi(detId)
-                    //             << "; InternalString = " << tTopo.tibIsInternalString(detId)
-                    //             << "; ExternalString = " << tTopo.tibIsExternalString(detId)
-                    //             << "; Glued = " << tTopo.tibGlued(detId) << std::endl;
-
-                    //     // const RectangularStripTopology& topol = dynamic_cast<const RectangularStripTopology&>(detUnit.type().topology());
-                    //     // float stripLength = topol.localStripLength(hit->localPosition());
-
-
-                    //     // X_mm = pos.x * 10;
-                    //     // Xerr_mm = pos.x_err * 10;
-                    //     // Y_mm = (stripLength / 2) * 10;
-                    //     // Yerr_mm = (stripLength * 10) / std::sqrt(12.0f);
-                    //     X_mm = pos.x * 10;
-                    //     Xerr_mm = pos.x_err * 10;
-                    //     Y_mm = pos.y * 10;
-                    //     Yerr_mm = pos.y_err* 10;
-                    // }
-                    // else if (IntSubDetID == StripSubdetector::TOB){
-                    //     std::cout << "TOB module along track: layer = " << tTopo.tobLayer(detId) 
-                    //             << "; side = " << tTopo.tobSide(detId)
-                    //             << "; Rod = " << tTopo.tobRod(detId)
-                    //             << "; IsDoubleSide = " << tTopo.tobIsDoubleSide(detId)
-                    //             << "; IsStereo = " << tTopo.tobIsStereo(detId)
-                    //             << "; IsRPhi = " << tTopo.tobIsRPhi(detId)
-                    //             << "; Glued = " << tTopo.tobGlued(detId) << std::endl;
-
-                    //     // const RectangularStripTopology& topol = dynamic_cast<const RectangularStripTopology&>(detUnit.type().topology());
-                    //     // float stripLength = topol.localStripLength(hit->localPosition());
-
-                    //     // X_mm = pos.x * 10;
-                    //     // Xerr_mm = pos.x_err * 10;
-                    //     // Y_mm = (stripLength / 2) * 10;
-                    //     // Yerr_mm = (stripLength * 10) / std::sqrt(12.0f);
-                    //     X_mm = pos.x * 10;
-                    //     Xerr_mm = pos.x_err * 10;
-                    //     Y_mm = pos.y * 10;
-                    //     Yerr_mm = pos.y_err* 10;
-                    // }
-                    // else {
-                    //     X_mm = pos.x * 10;
-                    //     Xerr_mm = pos.x_err * 10;
-                    //     Y_mm = pos.y * 10;
-                    //     Yerr_mm = pos.y_err* 10;
-                    // }
-
-                    // if (IntSubDetID == StripSubdetector::TIB || IntSubDetID == StripSubdetector::TOB) {
-
-                    //     std::cout << "Before the cast. ID " << detId.rawId() << " Topology real type: " << typeid(detUnit.type().topology()).name() << std::endl;
-
-                    //     const RectangularStripTopology& topol = dynamic_cast<const RectangularStripTopology&>(detUnit.type().topology());
-
-                    //     float stripLength = topol.localStripLength(hit->localPosition());
-                    //     std::cout << "After cast" << std::endl;
-
-                    //     // std::cout << "Strip length: " << stripLength << std::endl;
-                    //     X_mm = pos.x * 10;
-                    //     Xerr_mm = pos.x_err * 10;
-                    //     Y_mm = (stripLength / 2) * 10;
-                    //     Yerr_mm = stripLength / std::sqrt(12.0f);
-
-                    //     if (IntSubDetID == StripSubdetector::TIB) {
-                    //         std::cout << "TIB HIT" << std::endl;
-                    //         bool isStereo = tTopo.tibIsStereo(detId);
-                    //         bool isDoubleSide = tTopo.tibIsDoubleSide(detId);
-                    //         bool isRPhi = tTopo.tibIsRPhi(detId);
-                    //         std::cout << "================================"<< std::endl;
-                    //         std::cout << "is Stereo? " << isStereo << std::endl;
-                    //         std::cout << "is isRPhi? " << isRPhi << std::endl;
-                    //         std::cout << "is Double Side? " << isDoubleSide << std::endl;
-                    //         std::cout << "Local Position: X-> " << pos.x << "; Y-> " << pos.y << std::endl;
-                    //         std::cout << "================================"<< std::endl;
-
-                    //         auto stereoSurf = detUnit.surface();
-                    //         auto R = stereoSurf.rotation();
-                    //         std::cout << "Z ELEMENT : " << R.zz() << std::endl;
-                    //         // if(R.zz() < 0) {
-                    //         //     X_mm = X_mm;
-                    //         //     Y_mm = -1 * Y_mm;
-                    //         //     std::cout << "[CORRECTED TIB HITS] X = " << X_mm << "; Y = " << Y_mm << std::endl;
-                    //         // }
-
-                    //         auto X_corrected = X_mm;
-                    //         auto Y_corrected = Y_mm;
-                    //         std::cout << "[TIB HIT RAW] X = " << X_mm << "; Y = " << Y_mm << std::endl;
-                    //         // if(isStereo) {
-                    //         //     std::cout << "Ruoto" << std::endl; 
-                    //         //     X_corrected = R.xx()*X_mm + R.yx()*X_mm;
-                    //         //     Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
-                    //         //     X_mm = X_corrected;
-                    //         //     Y_mm = Y_corrected;
-                    //         // }
+                //         auto X_corrected = X_mm;
+                //         auto Y_corrected = Y_mm;
+                //         std::cout << "[TIB HIT RAW] X = " << X_mm << "; Y = " << Y_mm << std::endl;
+                //         // if(isStereo) {
+                //         //     std::cout << "Ruoto" << std::endl; 
+                //         //     X_corrected = R.xx()*X_mm + R.yx()*X_mm;
+                //         //     Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
+                //         //     X_mm = X_corrected;
+                //         //     Y_mm = Y_corrected;
+                //         // }
 
 
 
-                    //         GlobalVector n = detUnit.surface().toGlobal(LocalVector(0,0,1));
-                    //         GlobalPoint center = detUnit.surface().position();
-                    //         GlobalVector radial = GlobalVector(center.x(), center.y(), center.z());
-                    //         GlobalVector rhat = radial.unit(); 
-                    //         // COnfronto con il versore radiale uscente:
-                    //         bool isFlipped = (n.dot(rhat) < 0);
+                //         GlobalVector n = detUnit.surface().toGlobal(LocalVector(0,0,1));
+                //         GlobalPoint center = detUnit.surface().position();
+                //         GlobalVector radial = GlobalVector(center.x(), center.y(), center.z());
+                //         GlobalVector rhat = radial.unit(); 
+                //         // COnfronto con il versore radiale uscente:
+                //         bool isFlipped = (n.dot(rhat) < 0);
 
-                    //         //if(isFlipped){
-                    //         if(R.zz() < 0){
-                    //             X_mm = X_mm;
-                    //             Y_mm = -1 * Y_mm;
-                    //         }
+                //         //if(isFlipped){
+                //         if(R.zz() < 0){
+                //             X_mm = X_mm;
+                //             Y_mm = -1 * Y_mm;
+                //         }
 
-                    //         std::cout << "[TIB HIT MOD] X = " << X_mm << "; Y = " << Y_mm << std::endl;
+                //         std::cout << "[TIB HIT MOD] X = " << X_mm << "; Y = " << Y_mm << std::endl;
 
-                    //         // funziona:
-                    //         // auto X_corrected = X_mm;
-                    //         // auto Y_corrected = Y_mm;
-                    //         // if(R.zz() < 0){
-                    //         //     X_mm = X_corrected;
-                    //         //     Y_mm = -1 * Y_corrected;
-                    //         // } 
-                    //         // else {
-                    //         //     X_mm = X_corrected;
-                    //         //     Y_mm = Y_corrected;
-                    //         // }
-      
-                    //     }
-
-
-                    //     if (IntSubDetID == StripSubdetector::TOB) {
-                    //         std::cout << "TOB HIT" << std::endl;
-                    //         bool isStereo = tTopo.tobIsStereo(detId);
-                    //         bool isDoubleSide = tTopo.tobIsDoubleSide(detId);
-                    //         bool isRPhi = tTopo.tobIsRPhi(detId);
-                    //         std::cout << "================================"<< std::endl;
-                    //         std::cout << "is Stereo? " << isStereo << std::endl;
-                    //         std::cout << "is isRPhi? " << isRPhi << std::endl;
-                    //         std::cout << "is Double Side? " << isDoubleSide << std::endl;
-                    //         std::cout << "Local Position: X-> " << pos.x << "; Y-> " << pos.y << std::endl;
-                    //         std::cout << "================================"<< std::endl;
-                    //         // If stereo, apply the correction:
-                    //         auto stereoSurf = detUnit.surface();
-                    //         auto R = stereoSurf.rotation();
-
-                    //         GlobalVector n = detUnit.surface().toGlobal(LocalVector(0,0,1));
-                    //         GlobalPoint center = detUnit.surface().position();
-                    //         GlobalVector radial = GlobalVector(center.x(), center.y(), center.z());
-                    //         GlobalVector rhat = radial.unit(); 
-                    //         // COnfronto con il versore radiale uscente:
-                    //         bool isFlipped = (n.dot(rhat) < 0);
+                //         // funziona:
+                //         // auto X_corrected = X_mm;
+                //         // auto Y_corrected = Y_mm;
+                //         // if(R.zz() < 0){
+                //         //     X_mm = X_corrected;
+                //         //     Y_mm = -1 * Y_corrected;
+                //         // } 
+                //         // else {
+                //         //     X_mm = X_corrected;
+                //         //     Y_mm = Y_corrected;
+                //         // }
+    
+                //     }
 
 
-                    //         auto X_corrected = X_mm;
-                    //         auto Y_corrected = Y_mm;
-                            
-                    //         //if(isFlipped){
-                    //         if(R.zz() < 0){
-                    //             X_mm = -1 * X_corrected;
-                    //             Y_mm = -1 * Y_corrected;
-                    //             if(isStereo) {
-                    //                 X_corrected = R.xx()*X_mm + R.yx()*X_mm;
-                    //                 Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
-                    //                 X_mm = X_corrected;
-                    //                 Y_mm = Y_corrected;
-                    //             }
-                    //         } 
-                    //         else {
-                    //             if(isStereo) {
-                    //                 X_corrected = R.xx()*X_mm + R.yx()*X_mm;
-                    //                 Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
-                    //             }
-                    //             X_mm = X_corrected;
-                    //             Y_mm = Y_corrected;
-                    //         }
+                //     if (IntSubDetID == StripSubdetector::TOB) {
+                //         std::cout << "TOB HIT" << std::endl;
+                //         bool isStereo = tTopo.tobIsStereo(detId);
+                //         bool isDoubleSide = tTopo.tobIsDoubleSide(detId);
+                //         bool isRPhi = tTopo.tobIsRPhi(detId);
+                //         std::cout << "================================"<< std::endl;
+                //         std::cout << "is Stereo? " << isStereo << std::endl;
+                //         std::cout << "is isRPhi? " << isRPhi << std::endl;
+                //         std::cout << "is Double Side? " << isDoubleSide << std::endl;
+                //         std::cout << "Local Position: X-> " << pos.x << "; Y-> " << pos.y << std::endl;
+                //         std::cout << "================================"<< std::endl;
+                //         // If stereo, apply the correction:
+                //         auto stereoSurf = detUnit.surface();
+                //         auto R = stereoSurf.rotation();
+
+                //         GlobalVector n = detUnit.surface().toGlobal(LocalVector(0,0,1));
+                //         GlobalPoint center = detUnit.surface().position();
+                //         GlobalVector radial = GlobalVector(center.x(), center.y(), center.z());
+                //         GlobalVector rhat = radial.unit(); 
+                //         // COnfronto con il versore radiale uscente:
+                //         bool isFlipped = (n.dot(rhat) < 0);
 
 
-
-
-
-                    //         // if(isStereo) {
-                    //         //     auto X_corrected = R.xx()*X_mm + R.yx()*X_mm;
-                    //         //     auto Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
-                                    
-                    //         //     if(R.zz() < 0){
-                    //         //         X_mm = -1 * X_corrected;
-                    //         //         Y_mm = Y_corrected;
-                    //         //     }
-                    //         //     else {
-                    //         //         X_mm = X_corrected;
-                    //         //         Y_mm = Y_corrected;
-                    //         //     }
-                    //         //     std::cout << "[CORRECTED TOB HITS] X = " << X_mm << "; Y = " << Y_mm << std::endl;
-                    //         // }
-                    //     }
+                //         auto X_corrected = X_mm;
+                //         auto Y_corrected = Y_mm;
                         
+                //         //if(isFlipped){
+                //         if(R.zz() < 0){
+                //             X_mm = -1 * X_corrected;
+                //             Y_mm = -1 * Y_corrected;
+                //             if(isStereo) {
+                //                 X_corrected = R.xx()*X_mm + R.yx()*X_mm;
+                //                 Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
+                //                 X_mm = X_corrected;
+                //                 Y_mm = Y_corrected;
+                //             }
+                //         } 
+                //         else {
+                //             if(isStereo) {
+                //                 X_corrected = R.xx()*X_mm + R.yx()*X_mm;
+                //                 Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
+                //             }
+                //             X_mm = X_corrected;
+                //             Y_mm = Y_corrected;
+                //         }
 
 
-                    //     // LocalPoint tib_hit_cmssw(X_mm / 10 ,Y_mm / 10);
-                    //     // Acts::Vector2 tib_hit_acts = Acts::Vector2{X_mm,Y_mm};
-                    //     // auto cmssw_surf = detUnit.surface();
-                    //     // SurfaceConverters surfConv(trackerGeometry);
-                    //     // auto acts_surf = surfConv.fromCMSSWtoACTS(cmssw_surf);
-
-                    //     // auto gPos_cmssw = cmssw_surf.toGlobal(tib_hit_cmssw);
-                    //     // auto gPos_acts  = acts_surf->localToGlobal(Acts::GeometryContext{},tib_hit_acts, Acts::Vector3(0,0,0));
-
-                    //     // std::cout << "================================"<< std::endl;
-                    //     // std::cout << "ACTS local point:   X = " << tib_hit_acts[0] << "; Y = " << tib_hit_acts[1] << std::endl;
-                    //     // std::cout << "ACTS global point:  X = " << gPos_acts[0] << "; Y = " << gPos_acts[1] << "; Z = " << gPos_acts[2] << std::endl;
-                    //     // std::cout << "CMSSW local point:  X = " << tib_hit_cmssw.x() * 10 << "; Y = " << tib_hit_cmssw.y() * 10 << std::endl;
-                    //     // std::cout << "CMSSW global point: X = " << gPos_cmssw.x() * 10 << "; Y = " << gPos_cmssw.y() * 10 << "; Z = " << gPos_cmssw.z() * 10 << std::endl;   
-                    //     // std::cout << "================================"<< std::endl;
 
 
 
-
-                    // }
-                    // else if (IntSubDetID == StripSubdetector::TID) {
-                    //     std::cout << "Before the cast. TID ID " << detId.rawId() << " Topology real type: " << typeid(detUnit.type().topology()).name() << std::endl;
-
-                    //     const RadialStripTopology& topol = dynamic_cast<const RadialStripTopology&>(detUnit.type().topology());
-                    //     float stripLength = topol.localStripLength(hit->localPosition());
-                    //     std::cout << "After cast" << std::endl;
-
-                    //     X_mm = pos.x * 10;
-                    //     Xerr_mm = pos.x_err * 10;
-                    //     Y_mm = (stripLength / 2) * 10;
-                    //     Yerr_mm = stripLength / std::sqrt(12.0f);
-
-                    //     GlobalVector n = detUnit.surface().toGlobal(LocalVector(0,0,1));
-                    //     bool isFlipped = (n.dot(GlobalVector(0,0,1)) < 0);
-
-                    //     if(tTopo.tidIsZMinusSide(detId)){
-                    //         std::cout << "TID minus " << std::endl;
-                    //         // If it's negative Z, module is flipped if n dot (0,0,1) < 0
-                    //         if(isFlipped){
-                    //             std::cout << "     Flipping" << std::endl;
-                    //             X_mm = X_mm;
-                    //             Y_mm = -1 * Y_mm;
-                    //         }
-                    //     }
-                    //     else {
-                    //         std::cout << "TID Plus " << std::endl;
-                    //         if(!isFlipped){
-                    //             std::cout << "     Flipping" << std::endl;
-                    //             X_mm = X_mm;
-                    //             Y_mm = -1 * Y_mm;
-                    //         }
-                    //     }
-
-                    //     bool isBackRing = tTopo.tidIsBackRing(detId);
-                    //     std::cout << "================================"<< std::endl;
-                    //     std::cout << "is sBackRing? " << isBackRing << std::endl;
-                    //     std::cout << "Local Position: X-> " << pos.x << "; Y-> " << pos.y << std::endl;
-                    //     std::cout << "================================"<< std::endl;
-
-
-                    // }
-                    // else if (IntSubDetID == StripSubdetector::TEC) {
-                    //     std::cout << "Before the cast. TEC ID " << detId.rawId() << " Topology real type: " << typeid(detUnit.type().topology()).name() << std::endl;
-
-                    //     const RadialStripTopology& topol = dynamic_cast<const RadialStripTopology&>(detUnit.type().topology());
-                    //     float stripLength = topol.localStripLength(hit->localPosition());
-                    //     std::cout << "After cast" << std::endl;
-
-                    //     bool isStereo = tTopo.tecIsStereo(detId);
-
-                    //     X_mm = pos.x * 10;
-                    //     Xerr_mm = pos.x_err * 10;
-                    //     Y_mm = (stripLength / 2) * 10;
-                    //     Yerr_mm = stripLength / std::sqrt(12.0f);
-
-                    //     GlobalVector n = detUnit.surface().toGlobal(LocalVector(0,0,1));
-                    //     bool isFlipped = (n.dot(GlobalVector(0,0,1)) < 0);
-
-                    //     auto stereoSurf = detUnit.surface();
-                    //     auto R = stereoSurf.rotation();
-                    //     auto X_corrected = X_mm;
-                    //     auto Y_corrected = Y_mm;
-
-                    //     if(tTopo.tecIsZMinusSide(detId)){
-                    //         std::cout << "TEC minus " << std::endl;
-                    //         // If it's negative Z, module is flipped if n dot (0,0,1) < 0
-                    //         if(isFlipped){
-                    //             std::cout << "     Flipping" << std::endl;
-                    //             X_mm = -1 * X_mm;
-                    //             Y_mm = -1 * Y_mm;
-                    //             if(isStereo) {
-                    //                 X_corrected = R.xx()*X_mm + R.yx()*X_mm;
-                    //                 Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
-                    //                 X_mm = X_corrected;
-                    //                 Y_mm = Y_corrected;
-                    //             }
-                    //         } 
-                    //         else {
-                    //             if(isStereo) {
-                    //                 X_corrected = R.xx()*X_mm + R.yx()*X_mm;
-                    //                 Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
-                    //             }
-                    //             X_mm = X_corrected;
-                    //             Y_mm = Y_corrected;
-                    //         }
-                    //     }
-                    //     else {
-                    //         std::cout << "TEC Plus " << std::endl;
-                    //         if(!isFlipped){
-                    //             std::cout << "     Flipping" << std::endl;
-                    //             X_mm = -1 * X_mm;
-                    //             Y_mm = -1 * Y_mm;
-                    //             if(isStereo) {
-                    //                 X_corrected = R.xx()*X_mm + R.yx()*X_mm;
-                    //                 Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
-                    //                 X_mm = X_corrected;
-                    //                 Y_mm = Y_corrected;
-                    //             }
-                    //         }
-                    //         else {
-                    //             if(isStereo) {
-                    //                 X_corrected = R.xx()*X_mm + R.yx()*X_mm;
-                    //                 Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
-                    //             }
-                    //             X_mm = X_corrected;
-                    //             Y_mm = Y_corrected;
-                    //         }
-                    //     }
-
-                    // }              
-                    // else {
-                    //     X_mm = pos.x * 10;
-                    //     Xerr_mm = pos.x_err * 10;
-                    //     Y_mm = pos.y * 10;
-                    //     Yerr_mm = pos.y_err* 10;
-                    // }
-
-                    // std::cout << "[Raw Hits before conversion] type = " << h_type << "; X = " << X_mm << " +- " << Xerr_mm << "; Y = " << Y_mm << " +- " << Yerr_mm << std::endl;
-
-                    // Fitting:
-                    if (pos.valid){
-                        // if(h_type == 1 ) std::cout << "[DEBUG] PixelBarrel Hit: " << std::endl;
-                        // if(h_type == 2 ) std::cout << "[DEBUG] PixelEndcap Hit: " << std::endl;
-                        // if(h_type == 3 ) std::cout << "[DEBUG] TIB Hit: " << std::endl;
-                        // if(h_type == 4 ) std::cout << "[DEBUG] TID Hit: " << std::endl;
-                        // if(h_type == 5 ) std::cout << "[DEBUG] TOB Hit: " << std::endl;
-                        // if(h_type == 6 ) std::cout << "[DEBUG] TEC Hit: " << std::endl;
-
-                        // std::cout << "[DEBUG] Hit local pos: (" << pos.x*10 << ", " << pos.y*10 << ") ± (" << pos.x_err*10 << ", " << pos.y_err*10 << ")" << std::endl;
-                        // std::cout << "[CMSSW] Hit local pos: (" << pos.x*10 << ", " << pos.y*10 << ")" << std::endl;
-                        hit_type_.push_back(h_type);
-                        local_x_.push_back(X_mm); 
-                        local_y_.push_back(Y_mm);
-                        local_x_err_.push_back(Xerr_mm);
-                        local_y_err_.push_back(Yerr_mm);
-                        mod_id_.push_back(detId.rawId());
-                        // std::cout << "[CMSSW] Hit local pos: (" << X_mm << " +- " << Xerr_mm << ") (" << Y_mm << " +- " << Yerr_mm << ")" << std::endl;
-                        // std::cout << "DetID from CMSSW: " << detId.rawId() << std::endl;
-                        outF_cmssw << detId.rawId() << "; " << h_type << "; " << pos_global << '\n';
-                    } else {
-                        std::cout << "ERROR: Invalid Hit. Skipping." << std::endl;
-                    }
+                //         // if(isStereo) {
+                //         //     auto X_corrected = R.xx()*X_mm + R.yx()*X_mm;
+                //         //     auto Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
+                                
+                //         //     if(R.zz() < 0){
+                //         //         X_mm = -1 * X_corrected;
+                //         //         Y_mm = Y_corrected;
+                //         //     }
+                //         //     else {
+                //         //         X_mm = X_corrected;
+                //         //         Y_mm = Y_corrected;
+                //         //     }
+                //         //     std::cout << "[CORRECTED TOB HITS] X = " << X_mm << "; Y = " << Y_mm << std::endl;
+                //         // }
+                //     }
                     
+
+
+                //     // LocalPoint tib_hit_cmssw(X_mm / 10 ,Y_mm / 10);
+                //     // Acts::Vector2 tib_hit_acts = Acts::Vector2{X_mm,Y_mm};
+                //     // auto cmssw_surf = detUnit.surface();
+                //     // SurfaceConverters surfConv(trackerGeometry);
+                //     // auto acts_surf = surfConv.fromCMSSWtoACTS(cmssw_surf);
+
+                //     // auto gPos_cmssw = cmssw_surf.toGlobal(tib_hit_cmssw);
+                //     // auto gPos_acts  = acts_surf->localToGlobal(Acts::GeometryContext{},tib_hit_acts, Acts::Vector3(0,0,0));
+
+                //     // std::cout << "================================"<< std::endl;
+                //     // std::cout << "ACTS local point:   X = " << tib_hit_acts[0] << "; Y = " << tib_hit_acts[1] << std::endl;
+                //     // std::cout << "ACTS global point:  X = " << gPos_acts[0] << "; Y = " << gPos_acts[1] << "; Z = " << gPos_acts[2] << std::endl;
+                //     // std::cout << "CMSSW local point:  X = " << tib_hit_cmssw.x() * 10 << "; Y = " << tib_hit_cmssw.y() * 10 << std::endl;
+                //     // std::cout << "CMSSW global point: X = " << gPos_cmssw.x() * 10 << "; Y = " << gPos_cmssw.y() * 10 << "; Z = " << gPos_cmssw.z() * 10 << std::endl;   
+                //     // std::cout << "================================"<< std::endl;
+
+
+
+
+                // }
+                // else if (IntSubDetID == StripSubdetector::TID) {
+                //     std::cout << "Before the cast. TID ID " << detId.rawId() << " Topology real type: " << typeid(detUnit.type().topology()).name() << std::endl;
+
+                //     const RadialStripTopology& topol = dynamic_cast<const RadialStripTopology&>(detUnit.type().topology());
+                //     float stripLength = topol.localStripLength(hit->localPosition());
+                //     std::cout << "After cast" << std::endl;
+
+                //     X_mm = pos.x * 10;
+                //     Xerr_mm = pos.x_err * 10;
+                //     Y_mm = (stripLength / 2) * 10;
+                //     Yerr_mm = stripLength / std::sqrt(12.0f);
+
+                //     GlobalVector n = detUnit.surface().toGlobal(LocalVector(0,0,1));
+                //     bool isFlipped = (n.dot(GlobalVector(0,0,1)) < 0);
+
+                //     if(tTopo.tidIsZMinusSide(detId)){
+                //         std::cout << "TID minus " << std::endl;
+                //         // If it's negative Z, module is flipped if n dot (0,0,1) < 0
+                //         if(isFlipped){
+                //             std::cout << "     Flipping" << std::endl;
+                //             X_mm = X_mm;
+                //             Y_mm = -1 * Y_mm;
+                //         }
+                //     }
+                //     else {
+                //         std::cout << "TID Plus " << std::endl;
+                //         if(!isFlipped){
+                //             std::cout << "     Flipping" << std::endl;
+                //             X_mm = X_mm;
+                //             Y_mm = -1 * Y_mm;
+                //         }
+                //     }
+
+                //     bool isBackRing = tTopo.tidIsBackRing(detId);
+                //     std::cout << "================================"<< std::endl;
+                //     std::cout << "is sBackRing? " << isBackRing << std::endl;
+                //     std::cout << "Local Position: X-> " << pos.x << "; Y-> " << pos.y << std::endl;
+                //     std::cout << "================================"<< std::endl;
+
+
+                // }
+                // else if (IntSubDetID == StripSubdetector::TEC) {
+                //     std::cout << "Before the cast. TEC ID " << detId.rawId() << " Topology real type: " << typeid(detUnit.type().topology()).name() << std::endl;
+
+                //     const RadialStripTopology& topol = dynamic_cast<const RadialStripTopology&>(detUnit.type().topology());
+                //     float stripLength = topol.localStripLength(hit->localPosition());
+                //     std::cout << "After cast" << std::endl;
+
+                //     bool isStereo = tTopo.tecIsStereo(detId);
+
+                //     X_mm = pos.x * 10;
+                //     Xerr_mm = pos.x_err * 10;
+                //     Y_mm = (stripLength / 2) * 10;
+                //     Yerr_mm = stripLength / std::sqrt(12.0f);
+
+                //     GlobalVector n = detUnit.surface().toGlobal(LocalVector(0,0,1));
+                //     bool isFlipped = (n.dot(GlobalVector(0,0,1)) < 0);
+
+                //     auto stereoSurf = detUnit.surface();
+                //     auto R = stereoSurf.rotation();
+                //     auto X_corrected = X_mm;
+                //     auto Y_corrected = Y_mm;
+
+                //     if(tTopo.tecIsZMinusSide(detId)){
+                //         std::cout << "TEC minus " << std::endl;
+                //         // If it's negative Z, module is flipped if n dot (0,0,1) < 0
+                //         if(isFlipped){
+                //             std::cout << "     Flipping" << std::endl;
+                //             X_mm = -1 * X_mm;
+                //             Y_mm = -1 * Y_mm;
+                //             if(isStereo) {
+                //                 X_corrected = R.xx()*X_mm + R.yx()*X_mm;
+                //                 Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
+                //                 X_mm = X_corrected;
+                //                 Y_mm = Y_corrected;
+                //             }
+                //         } 
+                //         else {
+                //             if(isStereo) {
+                //                 X_corrected = R.xx()*X_mm + R.yx()*X_mm;
+                //                 Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
+                //             }
+                //             X_mm = X_corrected;
+                //             Y_mm = Y_corrected;
+                //         }
+                //     }
+                //     else {
+                //         std::cout << "TEC Plus " << std::endl;
+                //         if(!isFlipped){
+                //             std::cout << "     Flipping" << std::endl;
+                //             X_mm = -1 * X_mm;
+                //             Y_mm = -1 * Y_mm;
+                //             if(isStereo) {
+                //                 X_corrected = R.xx()*X_mm + R.yx()*X_mm;
+                //                 Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
+                //                 X_mm = X_corrected;
+                //                 Y_mm = Y_corrected;
+                //             }
+                //         }
+                //         else {
+                //             if(isStereo) {
+                //                 X_corrected = R.xx()*X_mm + R.yx()*X_mm;
+                //                 Y_corrected = R.xy()*X_mm + R.yy()*Y_mm;
+                //             }
+                //             X_mm = X_corrected;
+                //             Y_mm = Y_corrected;
+                //         }
+                //     }
+
+                // }              
+                // else {
+                //     X_mm = pos.x * 10;
+                //     Xerr_mm = pos.x_err * 10;
+                //     Y_mm = pos.y * 10;
+                //     Yerr_mm = pos.y_err* 10;
+                // }
+
+                // std::cout << "[Raw Hits before conversion] type = " << h_type << "; X = " << X_mm << " +- " << Xerr_mm << "; Y = " << Y_mm << " +- " << Yerr_mm << std::endl;
+
+                // Fitting:
+                if (pos.valid){
+                    // if(h_type == 1 ) std::cout << "[DEBUG] PixelBarrel Hit: " << std::endl;
+                    // if(h_type == 2 ) std::cout << "[DEBUG] PixelEndcap Hit: " << std::endl;
+                    // if(h_type == 3 ) std::cout << "[DEBUG] TIB Hit: " << std::endl;
+                    // if(h_type == 4 ) std::cout << "[DEBUG] TID Hit: " << std::endl;
+                    // if(h_type == 5 ) std::cout << "[DEBUG] TOB Hit: " << std::endl;
+                    // if(h_type == 6 ) std::cout << "[DEBUG] TEC Hit: " << std::endl;
+
+                    // std::cout << "[DEBUG] Hit local pos: (" << pos.x*10 << ", " << pos.y*10 << ") ± (" << pos.x_err*10 << ", " << pos.y_err*10 << ")" << std::endl;
+                    // std::cout << "[CMSSW] Hit local pos: (" << pos.x*10 << ", " << pos.y*10 << ")" << std::endl;
+                    hit_type_.push_back(h_type);
+                    local_x_.push_back(X_mm); 
+                    local_y_.push_back(Y_mm);
+                    local_x_err_.push_back(Xerr_mm);
+                    local_y_err_.push_back(Yerr_mm);
+                    mod_id_.push_back(detId.rawId());
+                    // std::cout << "[CMSSW] Hit local pos: (" << X_mm << " +- " << Xerr_mm << ") (" << Y_mm << " +- " << Yerr_mm << ")" << std::endl;
+                    // std::cout << "DetID from CMSSW: " << detId.rawId() << std::endl;
+                    outF_cmssw << detId.rawId() << "; " << h_type << "; " << pos_global << '\n';
+                } else {
+                    std::cout << "ERROR: Invalid Hit. Skipping." << std::endl;
                 }
-                outF_cmssw << "-----\n";
-                outF_cmssw.close();
+                
+            }
+            outF_cmssw << "-----\n";
+            outF_cmssw.close();
 
-                // edm::RefProd<TrackingRecHitCollection> recHitsRefProd = recHitsHandle.refProd();
-                // unsigned nH = rHits->size();
-
-
-                // ===== Convert CMSSW hits into ACTS hits =====
-                // std::cout << "Converting from CMSSW hits fo ACTS hits..." << std::endl;
-                FromCMSSWtoACTS_hits::HitsInfo hitsInfo;
-                hitsInfo.hit_type  = hit_type_;
-                hitsInfo.loc_x     = local_x_;
-                hitsInfo.loc_y     = local_y_;
-                hitsInfo.loc_x_err = local_x_err_;
-                hitsInfo.loc_y_err = local_y_err_;
-                hitsInfo.mod_ids   = mod_id_;
-                FromCMSSWtoACTS_hits CMSSWtoACTS_converter(hitsInfo, detEls);
-                std::vector<Acts::SourceLink> ACTS_hits = CMSSWtoACTS_converter.convert();
+            // edm::RefProd<TrackingRecHitCollection> recHitsRefProd = recHitsHandle.refProd();
+            // unsigned nH = rHits->size();
 
 
-                // DEBUG
-                std::ofstream outF("DetEl_ACTSInfo_AfterConversion.txt", std::ios::app);
-                // std::cout << "ACTS Hits after conversion: " << std::endl;
-                for( auto hit : ACTS_hits){
-                    auto surf = CMSSurfaceAccessor(hit);
-                    auto detEl = static_cast<const Acts::CMSDetectorElement*>(surf->associatedDetectorElement());
-                    if(detEl) {
-                        auto this_ID = detEl->detID();
-                        auto subDet = detEl->subDetector();
-                        auto surf = detEl->surface().getSharedPtr();
-                        auto globalPos = surf->localToGlobal(local_gCtx, Acts::Vector2(0, 0), Acts::Vector3(0,0,0));
+            // ===== Convert CMSSW hits into ACTS hits =====
+            // std::cout << "Converting from CMSSW hits fo ACTS hits..." << std::endl;
+            FromCMSSWtoACTS_hits::HitsInfo hitsInfo;
+            hitsInfo.hit_type  = hit_type_;
+            hitsInfo.loc_x     = local_x_;
+            hitsInfo.loc_y     = local_y_;
+            hitsInfo.loc_x_err = local_x_err_;
+            hitsInfo.loc_y_err = local_y_err_;
+            hitsInfo.mod_ids   = mod_id_;
+            FromCMSSWtoACTS_hits CMSSWtoACTS_converter(hitsInfo, detEls);
+            std::vector<Acts::SourceLink> ACTS_hits = CMSSWtoACTS_converter.convert();
 
-                        // PRINT HERE THE NRM TO THE ACTS SURFACE AND THE ID:
-                        // auto nrm_acts = surf->normal(Acts::GeometryContext{}, surf->center(Acts::GeometryContext{}), Acts::Vector3{0,0,0});
-                        // std::cout << "[ACTS] Normal to module " << this_ID << ": " << nrm_acts.transpose() << std::endl;
-        
-                        // std::cout << "[DEBUG] ACTS detId before the fit " << this_ID <<"; subDet = " << subDet << std::endl;
-                        outF << surf->geometryId() << "; " << this_ID << "; " << subDet << "; " << globalPos.transpose() << '\n';
+            // DEBUG
+            std::ofstream outF("DetEl_ACTSInfo_AfterConversion.txt", std::ios::app);
+            // std::cout << "ACTS Hits after conversion: " << std::endl;
+            for( auto hit : ACTS_hits){
+                auto surf = CMSSurfaceAccessor(hit);
+                auto detEl = static_cast<const Acts::CMSDetectorElement*>(surf->associatedDetectorElement());
+                if(detEl) {
+                    auto this_ID = detEl->detID();
+                    auto subDet = detEl->subDetector();
+                    auto surf = detEl->surface().getSharedPtr();
+                    auto globalPos = surf->localToGlobal(local_gCtx, Acts::Vector2(0, 0), Acts::Vector3(0,0,0));
 
-                        auto& cmsDetSL = hit.get<CMSDetectorSourceLink>();
+                    // PRINT HERE THE NRM TO THE ACTS SURFACE AND THE ID:
+                    // auto nrm_acts = surf->normal(Acts::GeometryContext{}, surf->center(Acts::GeometryContext{}), Acts::Vector3{0,0,0});
+                    // std::cout << "[ACTS] Normal to module " << this_ID << ": " << nrm_acts.transpose() << std::endl;
+    
+                    // std::cout << "[DEBUG] ACTS detId before the fit " << this_ID <<"; subDet = " << subDet << std::endl;
+                    outF << surf->geometryId() << "; " << this_ID << "; " << subDet << "; " << globalPos.transpose() << '\n';
 
-                        // std::cout << "[ACTS] cmsDetSL.lPos = " << cmsDetSL.lPos.transpose() << std::endl; //"; Error: " << cmsDetSL.lCov.transpose() << std::endl;
-                    }
+                    auto& cmsDetSL = hit.get<CMSDetectorSourceLink>();
 
-                    // DEBUG: is the B field ok? (maybe not...)
-                    // auto& cmsSL = hit.get<CMSDetectorSourceLink>();
-                    // Acts::Vector3 gPos = surf->localToGlobal(local_gCtx, cmsSL.lPos, Acts::Vector3(0,0,0));
-                    // Acts::MagneticFieldProvider::Cache cache;
-                    // auto B_res = magFieldPtr->getField(gPos, cache);
-                    // if(B_res.ok()){
-                    //     std::cout << "[DEBUG] B ACTS: At " << gPos.transpose() << " " << B_res.value().transpose() / Acts::UnitConstants::T << std::endl;
-                    // }
-
-                }
-                outF << "-----\n";
-                outF.close();
-                // DEBUG
-
-
-
-                // std::cout << ">>>>> Number of source links: " << ACTS_hits.size() << std::endl;
-                // std::cout << ">>>>> Number Rec Hits: " << hitCount_cmssw << std::endl;
-                hit_type_.clear();
-                local_x_.clear();
-                local_y_.clear();
-                local_x_err_.clear();
-                local_y_err_.clear();
-                mod_id_.clear();
-
-
-                // ===== Prepare to perform the refit on ACTS hits =====
-                // Obtain the initial parameters starting from TP params
-                Acts::GeometryContext gCtx;
-                Acts::MagneticFieldContext mfCtx;
-                auto pSurface = Acts::Surface::makeShared<Acts::PerigeeSurface>(Acts::Vector3( V.x()*10,  V.y()*10,  V.z()*10));
-                Acts::Vector4 tp_pos4_acts = Acts::Vector4(V.x()*10, V.y()*10, V.z()*10, 0);
-                Acts::Vector3 tp_dir_acts = Acts::Vector3(p4.px(), p4.py(), p4.pz());
-                double tp_qOverP_acts = tpRef->charge() / std::sqrt(p4.px()*p4.px() + p4.py()*p4.py() + p4.pz()*p4.pz());
-                auto tp_pType =  Acts::ParticleHypothesis::muon();
-                Acts::BoundMatrix tp_cov;
-
-                Acts::Result<Acts::BoundVector> trans_res = Acts::transformFreeToBoundParameters(Acts::Vector3(V.x()*10, V.y()*10, V.z()*10), 0, tp_dir_acts, tp_qOverP_acts, *pSurface, gCtx);
-                if(trans_res.ok()){ // (trans_res.ok())
-                    auto bvector = trans_res.value();
-                    Acts::EstimateTrackParamCovarianceConfig EstCov_cfg;
-                    tp_cov = Acts::estimateTrackParamCovariance(EstCov_cfg, bvector, true);
-                }
-                else{
-                    std::cout << "ERROR: Cannot extimate covariance matrix since transformFreeToBoundParameters failed" << std::endl;
-                    std::cout << "       Continue with the diagonal one" << std::endl;
-                    tp_cov = Acts::BoundSquareMatrix::Identity()*1e3;
+                    // std::cout << "[ACTS] cmsDetSL.lPos = " << cmsDetSL.lPos.transpose() << std::endl; //"; Error: " << cmsDetSL.lCov.transpose() << std::endl;
                 }
 
-                tp_cov = Acts::BoundSquareMatrix::Identity()*1e-3;//*1e5;
+                // DEBUG: is the B field ok? (maybe not...)
+                // auto& cmsSL = hit.get<CMSDetectorSourceLink>();
+                // Acts::Vector3 gPos = surf->localToGlobal(local_gCtx, cmsSL.lPos, Acts::Vector3(0,0,0));
+                // Acts::MagneticFieldProvider::Cache cache;
+                // auto B_res = magFieldPtr->getField(gPos, cache);
+                // if(B_res.ok()){
+                //     std::cout << "[DEBUG] B ACTS: At " << gPos.transpose() << " " << B_res.value().transpose() / Acts::UnitConstants::T << std::endl;
+                // }
 
-                auto start_param_res = Acts::BoundTrackParameters::create(gCtx, pSurface, tp_pos4_acts, tp_dir_acts, tp_qOverP_acts, tp_cov, tp_pType);
-                Acts::BoundTrackParameters start_param = *start_param_res;
+            }
+            outF << "-----\n";
+            outF.close();
+            // DEBUG
 
-                // DEBUG: Propagate the true particle 
-                Acts::PlyVisualization3D Hits_obj;
-                Acts::PlyVisualization3D Traj_obj;
-                MyConcretePropagator my_prop(prop);
-                PropagationAlgorithm_Config PropAlg_cfg;
-                myContext myCtx;
-                myCtx.geoContext = Acts::GeometryContext{};
-                myCtx.magFieldContext = Acts::MagneticFieldContext{};
-                std::shared_ptr<const Acts::Logger> Myprop_logger = Acts::getDefaultLogger("Concrete Propagator", Acts::Logging::Level::VERBOSE);
-                auto result = my_prop.execute(myCtx, PropAlg_cfg, *Myprop_logger, start_param);
-                PropagationSummary PropSum = result.value().first;
-                std::vector<Acts::Vector3> hits_vec;
-                for(const auto& step : PropSum.steps){
-                    Hits_obj.vertex(Acts::Vector3{step.position[0], step.position[1], step.position[2]}, {255, 165, 0}); 
-                    hits_vec.push_back(Acts::Vector3{step.position[0], step.position[1], step.position[2]});
+            // std::cout << ">>>>> Number of source links: " << ACTS_hits.size() << std::endl;
+            // std::cout << ">>>>> Number Rec Hits: " << hitCount_cmssw << std::endl;
+            hit_type_.clear();
+            local_x_.clear();
+            local_y_.clear();
+            local_x_err_.clear();
+            local_y_err_.clear();
+            mod_id_.clear();
 
-                    // DEBUG nel DEBUG: print the momentum of the step:
-                    // Acts::Vector3 Momentum = step.momentum;
-                    // auto P = Momentum[0]*Momentum[0] + Momentum[1]*Momentum[1] + Momentum[2]*Momentum[2];
-                    // std::cout << "[Propagation Momentum] P^2 = " << P << "; P = " << std::sqrt(P) << std::endl;
+
+            // ===== Prepare to perform the refit on ACTS hits =====
+            // Obtain the initial parameters starting from TP params
+            Acts::GeometryContext gCtx;
+            Acts::MagneticFieldContext mfCtx;
+            /// NOTE: Case I -> Using the parameters of the tracking particle
+            // auto V_vector = Acts::Vector3(V.x()*10, V.y()*10, V.z()*10);
+            // auto pSurface = Acts::Surface::makeShared<Acts::PerigeeSurface>(Acts::Vector3(V.x()*10, V.y()*10, V.z()*10));
+            // Acts::Vector4 tp_pos4_acts = Acts::Vector4(V.x()*10, V.y()*10, V.z()*10, 0);
+            // Acts::Vector3 tp_dir_acts = Acts::Vector3(p4.px(), p4.py(), p4.pz());
+            // double tp_qOverP_acts = tpRef->charge() / std::sqrt(p4.px()*p4.px() + p4.py()*p4.py() + p4.pz()*p4.pz());
+            // auto tp_pType =  Acts::ParticleHypothesis::muon();
+
+            /// NOTE: Case II -> Using the parameters of the reco Track
+            auto V_vector = Acts::Vector3(pos4[0]*10, pos4[1]*10, pos4[2]*10);
+            auto pSurface = Acts::Surface::makeShared<Acts::PerigeeSurface>(Acts::Vector3(pos4[0]*10, pos4[1]*10, pos4[2]*10));
+            Acts::Vector4 tp_pos4_acts = Acts::Vector4(pos4[0]*10, pos4[1]*10, pos4[2]*10, 0);
+            Acts::Vector3 tp_dir_acts = Acts::Vector3(dir.x(), dir.y(), dir.z());
+            double tp_qOverP_acts = recoTrack.qoverp(); ;
+            auto tp_pType =  Acts::ParticleHypothesis::muon();
+            
+            /// NOTE: Al long as we don't have a Jacobian (CMSSW->ACTS) we use a 'custom' covariance matrix
+            Acts::BoundMatrix tp_cov;
+            Acts::Result<Acts::BoundVector> trans_res = Acts::transformFreeToBoundParameters(V_vector, 0, tp_dir_acts, tp_qOverP_acts, *pSurface, gCtx);
+            if(trans_res.ok()){ // (trans_res.ok())
+                auto bvector = trans_res.value();
+                Acts::EstimateTrackParamCovarianceConfig EstCov_cfg;
+                tp_cov = Acts::estimateTrackParamCovariance(EstCov_cfg, bvector, true);
+            }
+            else{
+                std::cout << "ERROR: Cannot extimate covariance matrix since transformFreeToBoundParameters failed" << std::endl;
+                std::cout << "       Continue with the diagonal one" << std::endl;
+                tp_cov = Acts::BoundSquareMatrix::Identity()*1e3;
+            }
+            // tp_cov = Acts::BoundSquareMatrix::Identity()*1e-3;//*1e5; // Here to have the possibility of get rid of the condition above
+
+            auto start_param_res = Acts::BoundTrackParameters::create(gCtx, pSurface, tp_pos4_acts, tp_dir_acts, tp_qOverP_acts, tp_cov, tp_pType);
+            Acts::BoundTrackParameters start_param = *start_param_res;
+
+            // DEBUG: Propagate the true particle 
+            Acts::PlyVisualization3D Hits_obj;
+            Acts::PlyVisualization3D Traj_obj;
+            MyConcretePropagator my_prop(prop);
+            PropagationAlgorithm_Config PropAlg_cfg;
+            myContext myCtx;
+            myCtx.geoContext = Acts::GeometryContext{};
+            myCtx.magFieldContext = Acts::MagneticFieldContext{};
+            std::shared_ptr<const Acts::Logger> Myprop_logger = Acts::getDefaultLogger("Concrete Propagator", Acts::Logging::Level::INFO);
+            auto result = my_prop.execute(myCtx, PropAlg_cfg, *Myprop_logger, start_param);
+            PropagationSummary PropSum = result.value().first;
+            std::vector<Acts::Vector3> hits_vec;
+            for(const auto& step : PropSum.steps){
+                Hits_obj.vertex(Acts::Vector3{step.position[0], step.position[1], step.position[2]}, {255, 165, 0}); 
+                hits_vec.push_back(Acts::Vector3{step.position[0], step.position[1], step.position[2]});
+
+                // DEBUG nel DEBUG: print the momentum of the step:
+                // Acts::Vector3 Momentum = step.momentum;
+                // auto P = Momentum[0]*Momentum[0] + Momentum[1]*Momentum[1] + Momentum[2]*Momentum[2];
+                // std::cout << "[Propagation Momentum] P^2 = " << P << "; P = " << std::sqrt(P) << std::endl;
+            }
+            for(unsigned int i = 0; i < hits_vec.size() - 1; i++) {
+                Traj_obj.line(hits_vec[i], hits_vec[i+1],  {255, 165, 0}); 
+            }
+            Hits_obj.write("ObjFiles/TP_hits.ply");
+            Hits_obj.clear();
+            Traj_obj.write("ObjFiles/TP_traj.ply");
+            Traj_obj.clear();
+
+            // DEBUG nel DEBUG: do we see material propagating throught the geometry?
+            Acts::RecordedMaterial recMat = result.value().second;
+            // std::cout << "Accumulated Material: X_0 = " << recMat. materialInX0 << "; L0 = " << recMat.materialInL0 << std::endl;
+
+            // std::vector<Acts::MaterialInteraction> MatInteractions = recMat.materialInteractions;
+            // for(const auto& Int : MatInteractions) {
+            //     std::cout << "particle position at the interaction: " << Int.position.transpose() << std::endl;
+            //     std::cout << "momentum change due to the interaction: " << Int.deltaP << std::endl;
+            // }
+            // END of DEBUG
+
+
+            // ===== Define the KF  class =====
+            //  What's needed:
+            // - propagator
+            // - logger
+            using Propagator_t = Acts::Propagator<Acts::EigenStepper<>, Acts::Navigator>;
+            using Trajectory_t = Acts::VectorMultiTrajectory;
+            using TrackBackend = Acts::VectorTrackContainer;
+            using TrajectoryBackend = Acts::VectorMultiTrajectory;
+            using TrackContainer_t = Acts::TrackContainer<TrackBackend, TrajectoryBackend>;
+            std::unique_ptr<const Acts::Logger> KF_logger = Acts::getDefaultLogger("KalmanFitter", Acts::Logging::INFO);
+            Acts::KalmanFitter<Propagator_t, Trajectory_t> Kfitter(prop, std::move(KF_logger));
+
+            // ===== KalmanFitterExtensions ===== (needed by KalmanFilterOptions)
+            Acts::KalmanFitterExtensions<Trajectory_t> extensions;
+            extensions.surfaceAccessor.connect<&CMSSurfaceAccessor>();               // How to obtain the surface from the SourceLink 
+            extensions.calibrator.template connect<&CMSKFCalibrator<Trajectory_t>>(); // Shows how to unpack the raw hit info given a SourceLink
+            
+            Acts::GainMatrixUpdater kfUpdater;
+            Acts::GainMatrixSmoother kfSmoother;
+            extensions.updater.connect<&Acts::GainMatrixUpdater::operator()<Trajectory_t>>(&kfUpdater);
+            extensions.smoother.connect<&Acts::GainMatrixSmoother::operator()<Trajectory_t>>(&kfSmoother);
+
+            // ===== KalmanFilterOptions ===== 
+            Acts::CalibrationContext calibContext; 
+            Acts::PropagatorPlainOptions pOptions(gCtx, mfCtx);
+            pOptions.surfaceTolerance = 1e-4;
+
+            // ==== TrackContainer =====
+            // Stores the info of the track and trajectory step by step 
+            using TrackBackend = Acts::VectorTrackContainer;
+            using TrajectoryBackend = Acts::VectorMultiTrajectory;
+            TrackBackend trk_bkn;
+            TrajectoryBackend trj_bkn;
+            TrackContainer_t trk_container(trk_bkn, trj_bkn);
+
+            // == Perform the real re-fit =====
+            Acts::KalmanFitterOptions<Trajectory_t> kfOptions(gCtx, mfCtx, std::cref(calibContext), std::move(extensions), pOptions, pSurface.get());
+            auto fit_result = Kfitter.fit(ACTS_hits.begin(), ACTS_hits.end(), start_param, kfOptions, trk_container);
+
+            if (fit_result.ok()) {
+
+                TotACTS_reFitted += 1;
+                
+                Acts::TrackProxy trackProxy = fit_result.value();
+
+                // DEBUG: STANDALONE CHECK to verify if the pulls are good or not
+                // auto phi_res     = (trackProxy.phi() - tpRef->phi()); 
+                // auto phi_pull    = phi_res / std::sqrt(trackProxy.covariance()(2,2));
+                // auto qOverP_res  = (trackProxy.qOverP() - tp_qOverP_acts);
+                // auto qOverP_pull = qOverP_res / std::sqrt(trackProxy.covariance()(4,4));
+                // std::cout << "Covariance (4,4) = " << trackProxy.covariance()(4,4) << std::endl;
+                // auto theta_res   = (trackProxy.theta() - tpRef->theta()); 
+                // auto theta_pull  = theta_res / std::sqrt(trackProxy.covariance()(3,3));
+
+                // std::cout << "[STANDALONE] phi_res: " << phi_res << std::endl;
+                // std::cout << "[STANDALONE] phi_pull: " << phi_pull << std::endl;
+                // std::cout << "[STANDALONE] qOverP_res: " << qOverP_res << std::endl;
+                // std::cout << "[STANDALONE] qOverP_pull: " << qOverP_pull << std::endl;
+                // std::cout << "[STANDALONE] theta_res: " << theta_res << std::endl;
+                // std::cout << "[STANDALONE] theta_pull: " << theta_pull << std::endl;
+
+                // HERE
+                // Uncomment only then you analyze ONE track
+                std::cout << "Saving all the surface into an obj file" << std::endl;
+                SingleTrack3DVisualizer(ACTS_hits, fit_result.value(), trackerGeometry);
+
+                Acts::Vector3 fitted_dir = trackProxy.direction();   
+                double loc0 = trackProxy.loc0();
+                double loc1 = trackProxy.loc1();
+                Acts::Vector3 fitted_pos = pSurface->localToGlobal(gCtx, Acts::Vector2(loc0, loc1), fitted_dir);  //Acts::Vector3(0,0,0)
+                double theta = trackProxy.theta();
+                double phi = trackProxy.phi();
+                double qOverP = trackProxy.qOverP();
+                auto fitted_cov = trackProxy.covariance();
+
+                if(verbose){
+                    std::cout << "#FIT successfull#  for track " << trackCount << std::endl;
+                    std::cout << ">>>> Fitted parameters:" << std::endl;
+                    std::cout << "Fitted global position: x = " << fitted_pos.transpose()[0] << " y = " << fitted_pos.transpose()[1] << " z = " << fitted_pos.transpose()[2] << " t = 0" << std::endl;
+                    std::cout << "Fitted direction (normalized): x = " << fitted_dir.transpose()[0] << " y = " << fitted_dir.transpose()[1] << " z = " << fitted_dir.transpose()[2] << std::endl;
+                    std::cout << "loc0 = " << loc0 << std::endl;
+                    std::cout << "loc1 = " << loc1 << std::endl;
+                    std::cout << "phi = " << phi << std::endl;
+                    std::cout << "theta = " << theta << std::endl;
+                    std::cout << "q Over P = " << qOverP << std::endl;
+                    std::cout << "covariance = " << std::endl;
+                    std::cout << fitted_cov << std::endl;
                 }
-                for(unsigned int i = 0; i < hits_vec.size() - 1; i++) {
-                    Traj_obj.line(hits_vec[i], hits_vec[i+1],  {255, 165, 0}); 
-                }
-                Hits_obj.write("ObjFiles/TP_hits.ply");
-                Hits_obj.clear();
-                Traj_obj.write("ObjFiles/TP_traj.ply");
-                Traj_obj.clear();
 
-                // DEBUG nel DEBUG: do we see material propagating throught the geometry?
-                Acts::RecordedMaterial recMat = result.value().second;
-                std::cout << "Accumulated Material: X_0 = " << recMat. materialInX0 << "; L0 = " << recMat.materialInL0 << std::endl;
+                // Convert the ACTS covariance matrix to CMSSW one
+                auto ConvertedCov = convertCovACTStoCMSSW({loc0, loc1, phi, theta, qOverP}, pSurface, fitted_cov, fitted_dir);
 
-                std::vector<Acts::MaterialInteraction> MatInteractions = recMat.materialInteractions;
-                for(const auto& Int : MatInteractions) {
-                    std::cout << "particle position at the interaction: " << Int.position.transpose() << std::endl;
-                    std::cout << "momentum change due to the interaction: " << Int.deltaP << std::endl;
-                }
-                // END of DEBUG
-
-
-                // ===== Define the KF  class =====
-                //  What's needed:
-                // - propagator
-                // - logger
-                using Propagator_t = Acts::Propagator<Acts::EigenStepper<>, Acts::Navigator>;
-                using Trajectory_t = Acts::VectorMultiTrajectory;
-                using TrackBackend = Acts::VectorTrackContainer;
-                using TrajectoryBackend = Acts::VectorMultiTrajectory;
-                using TrackContainer_t = Acts::TrackContainer<TrackBackend, TrajectoryBackend>;
-                std::unique_ptr<const Acts::Logger> KF_logger = Acts::getDefaultLogger("KalmanFitter", Acts::Logging::INFO);
-                Acts::KalmanFitter<Propagator_t, Trajectory_t> Kfitter(prop, std::move(KF_logger));
-
-                // ===== KalmanFitterExtensions ===== (needed by KalmanFilterOptions)
-                Acts::KalmanFitterExtensions<Trajectory_t> extensions;
-                extensions.surfaceAccessor.connect<&CMSSurfaceAccessor>();               // How to obtain the surface from the SourceLink 
-                extensions.calibrator.template connect<&CMSKFCalibrator<Trajectory_t>>(); // Shows how to unpack the raw hit info given a SourceLink
-               
-                Acts::GainMatrixUpdater kfUpdater;
-                Acts::GainMatrixSmoother kfSmoother;
-                extensions.updater.connect<&Acts::GainMatrixUpdater::operator()<Trajectory_t>>(&kfUpdater);
-                extensions.smoother.connect<&Acts::GainMatrixSmoother::operator()<Trajectory_t>>(&kfSmoother);
-
-                // ===== KalmanFilterOptions ===== 
-                Acts::CalibrationContext calibContext; 
-                Acts::PropagatorPlainOptions pOptions(gCtx, mfCtx);
-                pOptions.surfaceTolerance = 1e-4;
-
-                // ==== TrackContainer =====
-                // Stores the info of the track and trajectory step by step 
-                using TrackBackend = Acts::VectorTrackContainer;
-                using TrajectoryBackend = Acts::VectorMultiTrajectory;
-                TrackBackend trk_bkn;
-                TrajectoryBackend trj_bkn;
-                TrackContainer_t trk_container(trk_bkn, trj_bkn);
-
-                // == Perform the real re-fit =====
-                Acts::KalmanFitterOptions<Trajectory_t> kfOptions(gCtx, mfCtx, std::cref(calibContext), std::move(extensions), pOptions, pSurface.get());
-                auto fit_result = Kfitter.fit(ACTS_hits.begin(), ACTS_hits.end(), start_param, kfOptions, trk_container);
-
-                if (fit_result.ok()) {
-
-                    TotACTS_reFitted += 1;
-                    
-                    Acts::TrackProxy trackProxy = fit_result.value();
-
-                    // STANDALONE CHECK:
-                    auto phi_res     = (trackProxy.phi() - tpRef->phi()); 
-                    auto phi_pull    = phi_res / std::sqrt(trackProxy.covariance()(2,2));
-                    auto qOverP_res  = (trackProxy.qOverP() - tp_qOverP_acts);
-                    auto qOverP_pull = qOverP_res / std::sqrt(trackProxy.covariance()(4,4));
-                    std::cout << "Covariance (4,4) = " << trackProxy.covariance()(4,4) << std::endl;
-                    auto theta_res   = (trackProxy.theta() - tpRef->theta()); 
-                    auto theta_pull  = theta_res / std::sqrt(trackProxy.covariance()(3,3));
-
-                    std::cout << "[STANDALONE] phi_res: " << phi_res << std::endl;
-                    std::cout << "[STANDALONE] phi_pull: " << phi_pull << std::endl;
-                    std::cout << "[STANDALONE] qOverP_res: " << qOverP_res << std::endl;
-                    std::cout << "[STANDALONE] qOverP_pull: " << qOverP_pull << std::endl;
-                    std::cout << "[STANDALONE] theta_res: " << theta_res << std::endl;
-                    std::cout << "[STANDALONE] theta_pull: " << theta_pull << std::endl;
-
-                    // HERE
-                    // Uncomment only then you analyze ONE track
-                    // std::cout << "Saving all the surface into an obj file" << std::endl;
-                    // SingleTrack3DVisualizer(ACTS_hits, fit_result.value(), trackerGeometry);
-
-                    Acts::Vector3 fitted_dir = trackProxy.direction();   
-                    double loc0 = trackProxy.loc0();
-                    double loc1 = trackProxy.loc1();
-                    Acts::Vector3 fitted_pos = pSurface->localToGlobal(gCtx, Acts::Vector2(loc0, loc1), fitted_dir);  //Acts::Vector3(0,0,0)
-                    double theta = trackProxy.theta();
-                    double phi = trackProxy.phi();
-                    double qOverP = trackProxy.qOverP();
-                    auto fitted_cov = trackProxy.covariance();
-
-                    if(verbose){
-                        std::cout << "#FIT successfull#" << std::endl;
-                        std::cout << ">>>> Fitted parameters:" << std::endl;
-                        std::cout << "Fitted global position: x = " << fitted_pos.transpose()[0] << " y = " << fitted_pos.transpose()[1] << " z = " << fitted_pos.transpose()[2] << " t = 0" << std::endl;
-                        std::cout << "Fitted direction (normalized): x = " << fitted_dir.transpose()[0] << " y = " << fitted_dir.transpose()[1] << " z = " << fitted_dir.transpose()[2] << std::endl;
-                        std::cout << "loc0 = " << loc0 << std::endl;
-                        std::cout << "loc1 = " << loc1 << std::endl;
-                        std::cout << "phi = " << phi << std::endl;
-                        std::cout << "theta = " << theta << std::endl;
-                        std::cout << "q Over P = " << qOverP << std::endl;
-                        std::cout << "covariance = " << std::endl;
-                        std::cout << fitted_cov << std::endl;
-                    }
-
-                    // Convert the ACTS covariance matrix to CMSSW one
-                    auto ConvertedCov = convertCovACTStoCMSSW({loc0, loc1, phi, theta, qOverP}, pSurface, fitted_cov, fitted_dir);
-
-                    // ===== Construct the reco::Track =====
-                    auto chi2 = static_cast<double>(trackProxy.chi2());
-                    auto ndof = static_cast<double>(trackProxy.nDoF());
-                    // reco::Track::Point refPoint(fitted_pos.transpose()[0] / 10, fitted_pos.transpose()[1] / 10, fitted_pos.transpose()[2] / 10); // from mm to cm 
-                    reco::Track::Point refPoint(V.x(), V.y(), V.z()); 
-                    auto P = abs(1 / qOverP);
-                    reco::Track::Vector Momentum(P*fitted_dir.transpose()[0], P*fitted_dir.transpose()[1], P*fitted_dir.transpose()[2]);
-                    int charge = (qOverP > 0) ? +1 : -1;
+                // ===== Construct the reco::Track =====
+                auto chi2 = static_cast<double>(trackProxy.chi2());
+                auto ndof = static_cast<double>(trackProxy.nDoF());
+                // reco::Track::Point refPoint(fitted_pos.transpose()[0] / 10, fitted_pos.transpose()[1] / 10, fitted_pos.transpose()[2] / 10); // from mm to cm 
+                reco::Track::Point refPoint(fitted_pos[0] / 10, fitted_pos[1] / 10, fitted_pos[2] / 10); 
+                std::cout << refPoint << std::endl;
+                auto P = abs(1 / qOverP);
+                reco::Track::Vector Momentum(P*fitted_dir.transpose()[0], P*fitted_dir.transpose()[1], P*fitted_dir.transpose()[2]);
+                int charge = (qOverP > 0) ? +1 : -1;
+                if(verbose){
                     std::cout << "===== Parameters used to build the reco::Track =====" << std::endl;
                     std::cout << "chi2 = " << chi2 << std::endl;
                     std::cout << "ndof = " << ndof << std::endl;
@@ -1765,275 +1808,285 @@ void ACTSRefitTracksProducerDEBUG::produce(edm::Event& iEvent, const edm::EventS
                     std::cout << "refPoint = " << refPoint.x() << " " << refPoint.y() << " " << refPoint.z() << std::endl;
                     std::cout << "Momentum = " << Momentum.x() << " " << Momentum.y() << " " << Momentum.z() << std::endl;
                     std::cout << "ConvertedCov = " << ConvertedCov << std::endl;
-                    reco::Track recoTrack_acts(chi2, ndof, refPoint, Momentum, charge, ConvertedCov);
-                    // reco::Track::CovarianceMatrix cov5;
-                    // constexpr int dimTrack = reco::Track::dimension;
+                }
+                reco::Track recoTrack_acts(chi2, ndof, refPoint, Momentum, charge, ConvertedCov);
+                // reco::Track::CovarianceMatrix cov5;
+                // constexpr int dimTrack = reco::Track::dimension;
 
-                    // for (int i = 0; i < dimTrack; ++i) {
-                    //     for (int j = 0; j <= i; ++j) { 
-                    //         cov5(i,j) = fitted_cov(i,j);  
-                    //     }
-                    // }
-                    // reco::Track recoTrack_acts(chi2, ndof, refPoint, Momentum, charge, cov5);
+                // for (int i = 0; i < dimTrack; ++i) {
+                //     for (int j = 0; j <= i; ++j) { 
+                //         cov5(i,j) = fitted_cov(i,j);  
+                //     }
+                // }
+                // reco::Track recoTrack_acts(chi2, ndof, refPoint, Momentum, charge, cov5);
 
-                    // ===== Define the Track Extras associated to this recoTrack =====
-                    // Take seedDir, seedRef, outerId and innerID from the Track State of the CMSSW reco track
-                    auto trackExtra_cmssw = recoTrack.extra();
-                    unsigned int outerId_cmssw = 0;
-                    unsigned int innerId_cmssw = 0;
-                    unsigned int firstRecHit = 0, recHitsSize = 0;
-                    std::unique_ptr<TrackingRecHitCollection> hitCollection;
-                    PropagationDirection seedDir_cmssw{};
-                    edm::RefToBase<TrajectorySeed> seedRef_cmssw;
-                    if (trackExtra_cmssw.isNonnull()) {
-                        const reco::TrackExtra& trackExtra = *trackExtra_cmssw;
-                        seedDir_cmssw = trackExtra.seedDirection();
-                        seedRef_cmssw = trackExtra.seedRef();
-                        innerId_cmssw = trackExtra.innerDetId();
-                        outerId_cmssw = trackExtra.outerDetId();
-                        // test:
-                        firstRecHit   = trackExtra.firstRecHit();
-                        recHitsSize   = trackExtra.recHitsSize();
+                // ===== Define the Track Extras associated to this recoTrack =====
+                // Take seedDir, seedRef, outerId and innerID from the Track State of the CMSSW reco track
+                auto trackExtra_cmssw = recoTrack.extra();
+                unsigned int outerId_cmssw = 0;
+                unsigned int innerId_cmssw = 0;
+                unsigned int firstRecHit = 0, recHitsSize = 0;
+                std::unique_ptr<TrackingRecHitCollection> hitCollection;
+                PropagationDirection seedDir_cmssw{};
+                edm::RefToBase<TrajectorySeed> seedRef_cmssw;
+                if (trackExtra_cmssw.isNonnull()) {
+                    const reco::TrackExtra& trackExtra = *trackExtra_cmssw;
+                    seedDir_cmssw = trackExtra.seedDirection();
+                    seedRef_cmssw = trackExtra.seedRef();
+                    innerId_cmssw = trackExtra.innerDetId();
+                    outerId_cmssw = trackExtra.outerDetId();
+                    // test:
+                    firstRecHit   = trackExtra.firstRecHit();
+                    recHitsSize   = trackExtra.recHitsSize();
 
-                        hitCollection = std::make_unique<TrackingRecHitCollection>(trackExtra.recHitsProduct());
-                    }
-                    edm::OrphanHandle<TrackingRecHitCollection> hitHandle = iEvent.put(std::move(hitCollection));
-                    TrackingRecHitRefProd hitRefProd(hitHandle);
+                    hitCollection = std::make_unique<TrackingRecHitCollection>(trackExtra.recHitsProduct());
+                }
+                edm::OrphanHandle<TrackingRecHitCollection> hitHandle = iEvent.put(std::move(hitCollection));
+                TrackingRecHitRefProd hitRefProd(hitHandle);
 
 
 
-                    // OUTER 
-                    // auto oState = trackProxy.outermostTrackState();
-                    // std::shared_ptr<reco::Track::Point> oStatePosition_ptr;
-                    // std::shared_ptr<reco::Track::Vector> oStateMomentum_ptr;
-                    // std::shared_ptr<reco::Track::CovarianceMatrix> oCovariance_ptr;
-                    // if(oState.hasReferenceSurface()) {
-                    //     // Get the Momentum
-                    //     auto oAbsoluteP = abs(1 / oState.parameters()[4]);
-                    //     Acts::Vector3 oDir = makeDirectionFromPhiTheta(oState.parameters()[2], oState.parameters()[3]);
-                    //     oStateMomentum_ptr = std::make_shared<reco::Track::Vector>(oAbsoluteP*oDir[0], oAbsoluteP*oDir[1], oAbsoluteP*oDir[2]);
-                        
-                    //     // Get the Global Position
-                    //     auto oSurf = oState.referenceSurface().getSharedPtr();
-
-                    //     auto detEl = static_cast<const Acts::CMSDetectorElement*>(oSurf->associatedDetectorElement());
-                    //     if(detEl) {
-                    //         auto this_ID = detEl->detID();
-                    //         std::cout << "Outer ID: " << this_ID << std::endl;
-                    //         outerId_cmssw = this_ID;
-                    //     }
-
-                    //     Acts::Vector3 oGlopalPos = oSurf->localToGlobal(gCtx, Acts::Vector2(oState.parameters()[0], oState.parameters()[1]), oDir); //(indeces from Acts/Definitions/TrackParametrization.hpp)
-                    //     oStatePosition_ptr = std::make_shared<reco::Track::Point>(oGlopalPos[0], oGlopalPos[1], oGlopalPos[2]); // [mm]
-                        
-                    //     // Get the covariance
-                    //     reco::Track::CovarianceMatrix oCovariance;
-                    //     for (int i = 0; i < reco::Track::dimension; ++i) {
-                    //         for (int j = 0; j <= i; ++j) { 
-                    //             oCovariance(i,j) = oState.covariance()(i,j);  
-                    //         }
-                    //     }
-                    //     oCovariance_ptr = std::make_shared<reco::Track::CovarianceMatrix>(oCovariance);
-
-                    //     // Debug printout:
-                    //     std::cout << " ===== OUTER STATE PARAMETERS =====" << std::endl;
-                    //     std::cout << "Position: " << *oStatePosition_ptr << std::endl;
-                    //     std::cout << "Momentum: " << *oStateMomentum_ptr << std::endl;
-                    //     std::cout << "Covariance: " << *oCovariance_ptr << std::endl;
-                    // }
-                    // else {
-                    //     std::cout << "ERROR: Outer state does not have a reference surface!" << std::endl;
-                    // }
-
-                    bool outerOK = false, innerOK = false;
+                // OUTER 
+                // auto oState = trackProxy.outermostTrackState();
+                // std::shared_ptr<reco::Track::Point> oStatePosition_ptr;
+                // std::shared_ptr<reco::Track::Vector> oStateMomentum_ptr;
+                // std::shared_ptr<reco::Track::CovarianceMatrix> oCovariance_ptr;
+                // if(oState.hasReferenceSurface()) {
+                //     // Get the Momentum
+                //     auto oAbsoluteP = abs(1 / oState.parameters()[4]);
+                //     Acts::Vector3 oDir = makeDirectionFromPhiTheta(oState.parameters()[2], oState.parameters()[3]);
+                //     oStateMomentum_ptr = std::make_shared<reco::Track::Vector>(oAbsoluteP*oDir[0], oAbsoluteP*oDir[1], oAbsoluteP*oDir[2]);
                     
-                    std::shared_ptr<reco::Track::Point> iStatePosition_ptr;
-                    std::shared_ptr<reco::Track::Point> oStatePosition_ptr;
-                    std::shared_ptr<reco::Track::Vector> iStateMomentum_ptr;
-                    std::shared_ptr<reco::Track::Vector> oStateMomentum_ptr;
-                    std::shared_ptr<reco::Track::CovarianceMatrix> iCovariance_ptr;
-                    std::shared_ptr<reco::Track::CovarianceMatrix> oCovariance_ptr;
-                    // HERE
-                    for(auto this_state : trackProxy.trackStatesReversed()){
-                        if(this_state.hasReferenceSurface()){
-                            const Acts::Surface& this_surf = this_state.referenceSurface();
-                            std::vector<double> params;
-                            for(int i = 0; i < 5; i ++) {
-                                params.push_back(this_state.parameters()[i]);
-                            }
+                //     // Get the Global Position
+                //     auto oSurf = oState.referenceSurface().getSharedPtr();
 
-                            if(this_surf.associatedDetectorElement() != nullptr){
+                //     auto detEl = static_cast<const Acts::CMSDetectorElement*>(oSurf->associatedDetectorElement());
+                //     if(detEl) {
+                //         auto this_ID = detEl->detID();
+                //         std::cout << "Outer ID: " << this_ID << std::endl;
+                //         outerId_cmssw = this_ID;
+                //     }
 
-                                auto detEl = dynamic_cast<const Acts::CMSDetectorElement*>(this_surf.associatedDetectorElement());
-                                auto this_ID = detEl->detID();
-                                
-                                // std::cout << "[DEBUG] ThisID: " << this_ID << std::endl;
-                                if (this_ID == outerId_cmssw) {
-                                    // std::cout << "[DEBUG] Outer detId Identified! With id: " << this_ID << std::endl;
-                                    outerOK = true;
-                                    // Get the Momentum
-                                    auto oAbsoluteP = abs(1 / this_state.parameters()[4]);
-                                    Acts::Vector3 oDir = makeDirectionFromPhiTheta(this_state.parameters()[2], this_state.parameters()[3]);
-                                    oStateMomentum_ptr = std::make_shared<reco::Track::Vector>(oAbsoluteP*oDir[0], oAbsoluteP*oDir[1], oAbsoluteP*oDir[2]);
+                //     Acts::Vector3 oGlopalPos = oSurf->localToGlobal(gCtx, Acts::Vector2(oState.parameters()[0], oState.parameters()[1]), oDir); //(indeces from Acts/Definitions/TrackParametrization.hpp)
+                //     oStatePosition_ptr = std::make_shared<reco::Track::Point>(oGlopalPos[0], oGlopalPos[1], oGlopalPos[2]); // [mm]
+                    
+                //     // Get the covariance
+                //     reco::Track::CovarianceMatrix oCovariance;
+                //     for (int i = 0; i < reco::Track::dimension; ++i) {
+                //         for (int j = 0; j <= i; ++j) { 
+                //             oCovariance(i,j) = oState.covariance()(i,j);  
+                //         }
+                //     }
+                //     oCovariance_ptr = std::make_shared<reco::Track::CovarianceMatrix>(oCovariance);
 
-                                    // Get the Global Position
-                                    auto oSurf = this_state.referenceSurface().getSharedPtr();
-                                    Acts::Vector3 oGlopalPos = oSurf->localToGlobal(gCtx, Acts::Vector2(this_state.parameters()[0], this_state.parameters()[1]), oDir); //(indeces from Acts/Definitions/TrackParametrization.hpp)
-                                    oStatePosition_ptr = std::make_shared<reco::Track::Point>(oGlopalPos[0], oGlopalPos[1], oGlopalPos[2]); // [mm]
+                //     // Debug printout:
+                //     std::cout << " ===== OUTER STATE PARAMETERS =====" << std::endl;
+                //     std::cout << "Position: " << *oStatePosition_ptr << std::endl;
+                //     std::cout << "Momentum: " << *oStateMomentum_ptr << std::endl;
+                //     std::cout << "Covariance: " << *oCovariance_ptr << std::endl;
+                // }
+                // else {
+                //     std::cout << "ERROR: Outer state does not have a reference surface!" << std::endl;
+                // }
 
-                                    // Get the covariance
-                                    auto converted_oCov = convertCovACTStoCMSSW(params, oSurf, this_state.covariance(), oDir);
-                                    // reco::Track::CovarianceMatrix oCovariance;
-                                    // for (int i = 0; i < reco::Track::dimension; ++i) {
-                                    //     for (int j = 0; j <= i; ++j) { 
-                                    //         oCovariance(i,j) = this_state.covariance()(i,j);  
-                                    //     }
-                                    // }
-                                    oCovariance_ptr = std::make_shared<reco::Track::CovarianceMatrix>(converted_oCov);
-
-
-                                    // Debug printout:
-                                    // std::cout << " ===== OUTER STATE PARAMETERS =====" << std::endl;
-                                    // std::cout << "Position: " << *oStateMomentum_ptr << std::endl;
-                                    // std::cout << "Momentum: " << *oStatePosition_ptr << std::endl;
-                                    // std::cout << "Covariance: " << *oCovariance_ptr << std::endl;
-                                } 
-                                else if (this_ID == innerId_cmssw) {
-                                    // std::cout << "[DEBUG] Inner detId Identified! With id: " << this_ID << std::endl;
-                                    innerOK = true;
-                                    // Get the Momentum
-                                    auto iAbsoluteP = abs(1 / this_state.parameters()[4]);
-                                    Acts::Vector3 iDir = makeDirectionFromPhiTheta(this_state.parameters()[2], this_state.parameters()[3]);
-                                    iStateMomentum_ptr = std::make_shared<reco::Track::Vector>(iAbsoluteP*iDir[0], iAbsoluteP*iDir[1], iAbsoluteP*iDir[2]);
-
-                                    // Get the Global Position
-                                    auto iSurf = this_state.referenceSurface().getSharedPtr();
-                                    Acts::Vector3 iGlopalPos = iSurf->localToGlobal(gCtx, Acts::Vector2(this_state.parameters()[0], this_state.parameters()[1]), iDir); //(indeces from Acts/Definitions/TrackParametrization.hpp)
-                                    iStatePosition_ptr = std::make_shared<reco::Track::Point>(iGlopalPos[0], iGlopalPos[1], iGlopalPos[2]); // [mm]
-
-                                    // Get the covariance
-                                    auto converted_iCov = convertCovACTStoCMSSW(params, iSurf, this_state.covariance(), iDir);
-                                    // reco::Track::CovarianceMatrix iCovariance;
-                                    // for (int i = 0; i < reco::Track::dimension; ++i) {
-                                    //     for (int j = 0; j <= i; ++j) { 
-                                    //         iCovariance(i,j) = this_state.covariance()(i,j);  
-                                    //     }
-                                    // }
-                                    iCovariance_ptr = std::make_shared<reco::Track::CovarianceMatrix>(converted_iCov);
-
-
-                                    // Debug printout:
-                                    // std::cout << " ===== INNER STATE PARAMETERS =====" << std::endl;
-                                    // std::cout << "Position: " << *iStateMomentum_ptr << std::endl;
-                                    // std::cout << "Momentum: " << *iStatePosition_ptr << std::endl;
-                                    // std::cout << "Covariance: " << *iCovariance_ptr << std::endl;
-
-                                }
-                            }
+                bool outerOK = false, innerOK = false;
+                
+                std::shared_ptr<reco::Track::Point> iStatePosition_ptr;
+                std::shared_ptr<reco::Track::Point> oStatePosition_ptr;
+                std::shared_ptr<reco::Track::Vector> iStateMomentum_ptr;
+                std::shared_ptr<reco::Track::Vector> oStateMomentum_ptr;
+                std::shared_ptr<reco::Track::CovarianceMatrix> iCovariance_ptr;
+                std::shared_ptr<reco::Track::CovarianceMatrix> oCovariance_ptr;
+                // HERE
+                for(auto this_state : trackProxy.trackStatesReversed()){
+                    if(this_state.hasReferenceSurface()){
+                        const Acts::Surface& this_surf = this_state.referenceSurface();
+                        std::vector<double> params;
+                        for(int i = 0; i < 5; i ++) {
+                            params.push_back(this_state.parameters()[i]);
                         }
-                    }
-                    
-                    if (outerOK && innerOK) {
-                        // std::cout << ">>>>> INNER AND OUTER DETID IDENTIFIED" << std::endl;
-                        TotACTS_GoodOoutIndetID += 1;
-                        reco::TrackExtra trackExtra_acts(*oStatePosition_ptr, *oStateMomentum_ptr, true, *iStatePosition_ptr, *iStateMomentum_ptr, true, *oCovariance_ptr, outerId_cmssw, *iCovariance_ptr, innerId_cmssw, seedDir_cmssw, seedRef_cmssw);
-                        trackExtra_acts.setHits(hitRefProd, firstRecHit, recHitsSize);
-                        
-                        // ===== Assign the reco::Hits to the trackExtra =====
-                        // auto hitsCollection = std::make_unique<TrackingRecHitCollection>();
-                        // auto const firstHitIndex = hitIndex;
-                        // unsigned int nHitsAdded = 0;
-                        // for (trackingRecHit_iterator hit = recoTrack.recHitsBegin(); hit != recoTrack.recHitsEnd(); ++hit, ++hitIndex) {
-                        //     hitsCollection->push_back((*hit)->clone());
-                        //     ++nHitsAdded;
-                        // }
 
-                        // trackExtra_acts.setHits(hitsCollection.get(), firstHitIndex, nHitsAdded);
-                        // iEvent.put(std::move(hitsCollection));
+                        if(this_surf.associatedDetectorElement() != nullptr){
+
+                            auto detEl = dynamic_cast<const Acts::CMSDetectorElement*>(this_surf.associatedDetectorElement());
+                            auto this_ID = detEl->detID();
+                            
+                            // std::cout << "[DEBUG] ThisID: " << this_ID << std::endl;
+                            if (this_ID == outerId_cmssw) {
+                                // std::cout << "[DEBUG] Outer detId Identified! With id: " << this_ID << std::endl;
+                                outerOK = true;
+                                // Get the Momentum
+                                auto oAbsoluteP = abs(1 / this_state.parameters()[4]);
+                                Acts::Vector3 oDir = makeDirectionFromPhiTheta(this_state.parameters()[2], this_state.parameters()[3]);
+                                oStateMomentum_ptr = std::make_shared<reco::Track::Vector>(oAbsoluteP*oDir[0], oAbsoluteP*oDir[1], oAbsoluteP*oDir[2]);
+
+                                // Get the Global Position
+                                auto oSurf = this_state.referenceSurface().getSharedPtr();
+                                Acts::Vector3 oGlopalPos = oSurf->localToGlobal(gCtx, Acts::Vector2(this_state.parameters()[0], this_state.parameters()[1]), oDir); //(indeces from Acts/Definitions/TrackParametrization.hpp)
+                                oStatePosition_ptr = std::make_shared<reco::Track::Point>(oGlopalPos[0], oGlopalPos[1], oGlopalPos[2]); // [mm]
+
+                                // Get the covariance
+                                auto converted_oCov = convertCovACTStoCMSSW(params, oSurf, this_state.covariance(), oDir);
+                                // reco::Track::CovarianceMatrix oCovariance;
+                                // for (int i = 0; i < reco::Track::dimension; ++i) {
+                                //     for (int j = 0; j <= i; ++j) { 
+                                //         oCovariance(i,j) = this_state.covariance()(i,j);  
+                                //     }
+                                // }
+                                oCovariance_ptr = std::make_shared<reco::Track::CovarianceMatrix>(converted_oCov);
 
 
-                        // ===== Assign TrackResiduals to the TrackExtra =====
-                        reco::TrackResiduals TrackRes_acts;
-                        TrackRes_acts.resize(trackProxy.nMeasurements());
-                        int idx = 0;
-                        // to do that, a loop on all the track state is needed:
-                        for(auto this_state : trackProxy.trackStatesReversed()){
-                            // Get the cluster position:
-                            if(this_state.hasCalibrated()){
-                                auto clusterPos = this_state.calibrated<2>();
-                                double x_cluster = clusterPos[0] / 10; // from mm to cm
-                                double y_cluster = clusterPos[1] / 10; // from mm to cm
-                                
-                                auto fitPos = this_state.smoothed();               
-                                auto fitCov = this_state.smoothedCovariance();   
+                                // Debug printout:
+                                // std::cout << " ===== OUTER STATE PARAMETERS =====" << std::endl;
+                                // std::cout << "Position: " << *oStateMomentum_ptr << std::endl;
+                                // std::cout << "Momentum: " << *oStatePosition_ptr << std::endl;
+                                // std::cout << "Covariance: " << *oCovariance_ptr << std::endl;
+                            } 
+                            else if (this_ID == innerId_cmssw) {
+                                // std::cout << "[DEBUG] Inner detId Identified! With id: " << this_ID << std::endl;
+                                innerOK = true;
+                                // Get the Momentum
+                                auto iAbsoluteP = abs(1 / this_state.parameters()[4]);
+                                Acts::Vector3 iDir = makeDirectionFromPhiTheta(this_state.parameters()[2], this_state.parameters()[3]);
+                                iStateMomentum_ptr = std::make_shared<reco::Track::Vector>(iAbsoluteP*iDir[0], iAbsoluteP*iDir[1], iAbsoluteP*iDir[2]);
 
-                                double x_fit =   fitPos[Acts::eBoundLoc0] / 10; // from mm to cm
-                                double y_fit =   fitPos[Acts::eBoundLoc1] / 10; // from mm to cm
+                                // Get the Global Position
+                                auto iSurf = this_state.referenceSurface().getSharedPtr();
+                                Acts::Vector3 iGlopalPos = iSurf->localToGlobal(gCtx, Acts::Vector2(this_state.parameters()[0], this_state.parameters()[1]), iDir); //(indeces from Acts/Definitions/TrackParametrization.hpp)
+                                iStatePosition_ptr = std::make_shared<reco::Track::Point>(iGlopalPos[0], iGlopalPos[1], iGlopalPos[2]); // [mm]
 
-                                double x_err = std::sqrt(fitCov(Acts::eBoundLoc0,Acts::eBoundLoc0) / 10); // from mm to cm
-                                double y_err = std::sqrt(fitCov(Acts::eBoundLoc1,Acts::eBoundLoc1) / 10); // from mm to cm
+                                // Get the covariance
+                                auto converted_iCov = convertCovACTStoCMSSW(params, iSurf, this_state.covariance(), iDir);
+                                // reco::Track::CovarianceMatrix iCovariance;
+                                // for (int i = 0; i < reco::Track::dimension; ++i) {
+                                //     for (int j = 0; j <= i; ++j) { 
+                                //         iCovariance(i,j) = this_state.covariance()(i,j);  
+                                //     }
+                                // }
+                                iCovariance_ptr = std::make_shared<reco::Track::CovarianceMatrix>(converted_iCov);
 
-                                auto resX = x_fit - x_cluster;
-                                auto pullX = resX / x_err;
-                                auto resY = y_fit - y_cluster;
-                                auto pullY = resY / y_err;
 
-                                TrackRes_acts.setResidualXY(idx, resX, resY);
-                                TrackRes_acts.setPullXY(idx, pullX, pullY);
-                                idx += 1;
+                                // Debug printout:
+                                // std::cout << " ===== INNER STATE PARAMETERS =====" << std::endl;
+                                // std::cout << "Position: " << *iStateMomentum_ptr << std::endl;
+                                // std::cout << "Momentum: " << *iStatePosition_ptr << std::endl;
+                                // std::cout << "Covariance: " << *iCovariance_ptr << std::endl;
 
-                                // std::cout << "resX: " << resX << ", pullX: " << pullX  << ", resY: " << resY << ", pullY: " << pullY << std::endl;
                             }
                         }
-                        trackExtra_acts.setResiduals(TrackRes_acts);
-
-                        //recoTrack_acts.setExtra(trackExtra_acts);
-
-                        ExtraColl->push_back(trackExtra_acts);
-                        TracksColl->push_back(recoTrack_acts);
-                        // TEMPORARY (related to the inner and outer detID match)
-                        TracksColl_CMSSW->push_back(recoTrack);
-
-                        // Save the hit collection in the event:
-                        //iEvent.put(std::move(hitsCollection), "actsRecHits");
                     }
-
-
-
-                    // DEBUG: fill a txt file with different informations:
-                    // I) Total number of measurements for this track:
-                    unsigned int nMeas = trackProxy.nMeasurements();
-                    // II) Total number of holes:
-                    unsigned int nHoles = trackProxy.nHoles();
-                    // III) Does it have a match with outer/inner detId?
-                    bool O_match = outerOK;
-                    bool I_match = innerOK;
-                    // IV) Eta of the particle:
-                    double eta = -std::log(std::tan(trackProxy.theta() / 2.0));
-                    // V) Number of reco::Hits from CMSSW
-                    /// NOTE: in order to have only VALID hits I need to loop on all the hits:
-                    unsigned int nHits_cmssw = 0;
-                    for(const auto& hit : recoTrack.recHits()){
-                        if(hit) {
-                            nHits_cmssw += 1;
-                        }
-                    }
-
-                    // Save everything in a file:
-                    outfile << nMeas << "\t" << nHoles << "\t" << O_match << "\t" << I_match << "\t" << eta << "\t" << nHits_cmssw << "\n";
-
-                    
-
-
-
-                } else {
-                    std::cout << "ERROR: Fit failed, moving to the next track" << fit_result.error() << std::endl;
                 }
                 
-                trk_len_ = std::distance(recoTrack.recHits().begin(), recoTrack.recHits().end());
+                if (outerOK && innerOK) {
+                    // std::cout << ">>>>> INNER AND OUTER DETID IDENTIFIED" << std::endl;
+                    TotACTS_GoodOoutIndetID += 1;
+                    reco::TrackExtra trackExtra_acts(*oStatePosition_ptr, *oStateMomentum_ptr, true, *iStatePosition_ptr, *iStateMomentum_ptr, true, *oCovariance_ptr, outerId_cmssw, *iCovariance_ptr, innerId_cmssw, seedDir_cmssw, seedRef_cmssw);
+                    trackExtra_acts.setHits(hitRefProd, firstRecHit, recHitsSize);
+                    
+                    // ===== Assign the reco::Hits to the trackExtra =====
+                    // auto hitsCollection = std::make_unique<TrackingRecHitCollection>();
+                    // auto const firstHitIndex = hitIndex;
+                    // unsigned int nHitsAdded = 0;
+                    // for (trackingRecHit_iterator hit = recoTrack.recHitsBegin(); hit != recoTrack.recHitsEnd(); ++hit, ++hitIndex) {
+                    //     hitsCollection->push_back((*hit)->clone());
+                    //     ++nHitsAdded;
+                    // }
+
+                    // trackExtra_acts.setHits(hitsCollection.get(), firstHitIndex, nHitsAdded);
+                    // iEvent.put(std::move(hitsCollection));
+
+
+                    // ===== Assign TrackResiduals to the TrackExtra =====
+                    reco::TrackResiduals TrackRes_acts;
+                    TrackRes_acts.resize(trackProxy.nMeasurements());
+                    int idx = 0;
+                    // to do that, a loop on all the track state is needed:
+                    for(auto this_state : trackProxy.trackStatesReversed()){
+                        // Get the cluster position:
+                        if(this_state.hasCalibrated()){
+                            auto clusterPos = this_state.calibrated<2>();
+                            double x_cluster = clusterPos[0] / 10; // from mm to cm
+                            double y_cluster = clusterPos[1] / 10; // from mm to cm
+                            
+                            auto fitPos = this_state.smoothed();               
+                            auto fitCov = this_state.smoothedCovariance();   
+
+                            double x_fit =   fitPos[Acts::eBoundLoc0] / 10; // from mm to cm
+                            double y_fit =   fitPos[Acts::eBoundLoc1] / 10; // from mm to cm
+
+                            double x_err = std::sqrt(fitCov(Acts::eBoundLoc0,Acts::eBoundLoc0) / 10); // from mm to cm
+                            double y_err = std::sqrt(fitCov(Acts::eBoundLoc1,Acts::eBoundLoc1) / 10); // from mm to cm
+
+                            auto resX = x_fit - x_cluster;
+                            auto pullX = resX / x_err;
+                            auto resY = y_fit - y_cluster;
+                            auto pullY = resY / y_err;
+
+                            TrackRes_acts.setResidualXY(idx, resX, resY);
+                            TrackRes_acts.setPullXY(idx, pullX, pullY);
+                            idx += 1;
+
+                            // std::cout << "resX: " << resX << ", pullX: " << pullX  << ", resY: " << resY << ", pullY: " << pullY << std::endl;
+                        }
+                    }
+                    trackExtra_acts.setResiduals(TrackRes_acts);
+
+                    //recoTrack_acts.setExtra(trackExtra_acts);
+
+                    ExtraColl->push_back(trackExtra_acts);
+                    TracksColl->push_back(recoTrack_acts);
+                    // TEMPORARY (related to the inner and outer detID match)
+                    TracksColl_CMSSW->push_back(recoTrack);
+
+                    // Save the hit collection in the event:
+                    //iEvent.put(std::move(hitsCollection), "actsRecHits");
+                }
+
+                // DEBUG:
+                if(!outerOK){
+                    std::cout << "Track number: " << trackCount << "Outer layer do not match! Eta: " << -std::log(std::tan(trackProxy.theta() / 2.0)) << std::endl;
+
+                }
+                if(!innerOK){
+                    std::cout << "Track number: " << trackCount << "Inner layer do not match! Eta: " << -std::log(std::tan(trackProxy.theta() / 2.0)) << std::endl;
+                }
+                // DEBUG
+
+
+
+                // DEBUG: fill a txt file with different informations:
+                // I) Total number of measurements for this track:
+                unsigned int nMeas = trackProxy.nMeasurements();
+                // II) Total number of holes:
+                unsigned int nHoles = trackProxy.nHoles();
+                // III) Does it have a match with outer/inner detId?
+                bool O_match = outerOK;
+                bool I_match = innerOK;
+                // IV) Eta of the particle:
+                double eta = -std::log(std::tan(trackProxy.theta() / 2.0));
+                // V) Number of reco::Hits from CMSSW
+                /// NOTE: in order to have only VALID hits I need to loop on all the hits:
+                unsigned int nHits_cmssw = 0;
+                for(const auto& hit : recoTrack.recHits()){
+                    if(hit) {
+                        nHits_cmssw += 1;
+                    }
+                }
+
+                // Save everything in a file:
+                outfile << nMeas << "\t" << nHoles << "\t" << O_match << "\t" << I_match << "\t" << eta << "\t" << nHits_cmssw << "\n";
+
+                
+
+
+
             } else {
-                std::cout << "Not associated Track" << std::endl;
+                std::cout << "ERROR: Fit failed, moving to the next track" << fit_result.error() << std::endl;
             }
+            
+            trk_len_ = std::distance(recoTrack.recHits().begin(), recoTrack.recHits().end());
+
+
             std::cout << "################################################################################################ " << std::endl;
         }
     }

@@ -1,0 +1,2 @@
+ALL_PACKAGES += SimTracker/TrackerMaterialAnalysis
+subdirs_src_SimTracker_TrackerMaterialAnalysis := src_SimTracker_TrackerMaterialAnalysis_plugins src_SimTracker_TrackerMaterialAnalysis_python src_SimTracker_TrackerMaterialAnalysis_test

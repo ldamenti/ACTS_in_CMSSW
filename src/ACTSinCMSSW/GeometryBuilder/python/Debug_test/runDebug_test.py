@@ -15,7 +15,8 @@ process = cms.Process('RECO',Run3_noMkFit, dd4hep)
 # GENERATOR INPUT FILE                  #
 globalPath = '/eos/user/l/ldamenti/DatasetFarm_files/'
 # filename = 'step2_Np10_E10GeV_muNeg_HitDebug.root'
-filename = 'step2_Np10k_E10GeV_muNeg.root'
+# filename = 'step2_Np10k_E10GeV_muNeg.root'
+filename = 'step2_Np1k_E5GeV_muNeg.root'
 # filename = 'step2_Np1k_E100GeV_muNeg_BarrOnly.root'
 #########################################
 
@@ -57,7 +58,8 @@ process.source = cms.Source("PoolSource",
     secondaryFileNames = cms.untracked.vstring()
 )
 
-# process.source.skipEvents = cms.untracked.uint32(299) # Jump to event n + 1
+process.source.skipEvents = cms.untracked.uint32(132) # Jump to event n + 1
+# process.source.skipEvents = cms.untracked.uint32(354) # Jump to event n + 1
 
 process.options = cms.untracked.PSet(
     IgnoreCompletely = cms.untracked.vstring(),
@@ -265,16 +267,16 @@ process.DQMoutput_step = cms.EndPath(process.DQMoutput)
 # ===== Construct the ACTS Tracking Geometry =====
 process.trackinGeoProducer = cms.ESProducer("ACTSTrackingGeometryProducer", 
     # Options to save the detector elements in an OBJ file
-    saveObjfile    = cms.untracked.bool(True),
+    saveObjfile    = cms.untracked.bool(False),
     outputObjFile  = cms.untracked.string("checkGeo.obj"),
     rangeZ         = cms.untracked.vdouble(-3000, 3000),  # Min, Max (mm)
     rangeR         = cms.untracked.vdouble(0, 1300),      # Min, Max (mm) 
     # Options to save the Tracker blueprint on an SVG file
-    saveSvgfile    = cms.untracked.bool(True),
+    saveSvgfile    = cms.untracked.bool(False),
     outputSvgFile  = cms.untracked.string("testSvg_output.svg"),
     # Option to map the material from a JSON file
     mapMaterial    = cms.untracked.bool(True),
-    MaterialMaps   = cms.untracked.string("../MaterialMaps.json")
+    MaterialMaps   = cms.untracked.string("../MaterialMaps_MatStudy.json")
 )
 
 # ===== Call the constructor of the Tracking Geometry =====
@@ -412,7 +414,8 @@ process.schedule = cms.Schedule(process.raw2digi_step,process.L1Reco_step,
                                 process.validation_step,process.validation_step1,process.dqmoffline_step,
                                 process.dqmoffline_1_step,process.dqmoffline_2_step,process.dqmofflineOnPAT_step,
                                 process.dqmofflineOnPAT_1_step,process.dqmofflineOnPAT_2_step,process.RECOSIMoutput_step,
-                                process.MINIAODSIMoutput_step,process.NANOEDMAODSIMoutput_step,process.DQMoutput_step,
+                                process.MINIAODSIMoutput_step,process.NANOEDMAODSIMoutput_step,
+                                process.DQMoutput_step,
                                 process.Myrefit_step, process.MyTrackingDQMPath, 
                                 process.MyResidualPath, process.MyResidualSiPath, 
                                 process.ActsValidationPath, process.CmsswValidationPath)
@@ -442,7 +445,7 @@ process = setCrossingFrameOn(process)
 from PhysicsTools.PatAlgos.slimming.miniAOD_tools import miniAOD_customizeAllMC 
 
 #call to customisation function miniAOD_customizeAllMC imported from PhysicsTools.PatAlgos.slimming.miniAOD_tools
-process = miniAOD_customizeAllMC(process)
+rocess = miniAOD_customizeAllMC(process)
 
 # End of customisation functions
 

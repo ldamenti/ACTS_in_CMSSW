@@ -1,0 +1,2 @@
+ALL_PACKAGES += ACTSinCMSSW/GeometryBuilder
+subdirs_src_ACTSinCMSSW_GeometryBuilder := src_ACTSinCMSSW_GeometryBuilder_plugins src_ACTSinCMSSW_GeometryBuilder_python

@@ -1,0 +1,4 @@
+plugin-poisoned-DQMTrackerMonitorTrack.so MonitorTrackResiduals CMS%EDM%Framework%Module
+plugin-poisoned-DQMTrackerMonitorTrack.so MonitorTrackResiduals CMS%EDM%Framework%ParameterSet%Description
+plugin-poisoned-DQMTrackerMonitorTrack.so SiPixelMonitorTrackResiduals CMS%EDM%Framework%Module
+plugin-poisoned-DQMTrackerMonitorTrack.so SiPixelMonitorTrackResiduals CMS%EDM%Framework%ParameterSet%Description

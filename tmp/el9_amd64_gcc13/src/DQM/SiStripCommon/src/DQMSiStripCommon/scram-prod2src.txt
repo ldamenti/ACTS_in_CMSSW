@@ -1,0 +1,1 @@
+DQMSiStripCommon DQM/SiStripCommon/src/APVShot.cc DQM/SiStripCommon/src/APVShotFinder.cc DQM/SiStripCommon/src/ExtractTObject.cc DQM/SiStripCommon/src/SiStripFolderOrganizer.cc DQM/SiStripCommon/src/SiStripHistoId.cc DQM/SiStripCommon/src/TkHistoMap.cc DQM/SiStripCommon/src/UpdateTProfile.cc

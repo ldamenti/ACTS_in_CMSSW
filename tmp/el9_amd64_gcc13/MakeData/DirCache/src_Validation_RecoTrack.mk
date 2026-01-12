@@ -1,0 +1,2 @@
+ALL_PACKAGES += Validation/RecoTrack
+subdirs_src_Validation_RecoTrack := src_Validation_RecoTrack_plugins src_Validation_RecoTrack_python src_Validation_RecoTrack_scripts src_Validation_RecoTrack_src src_Validation_RecoTrack_test

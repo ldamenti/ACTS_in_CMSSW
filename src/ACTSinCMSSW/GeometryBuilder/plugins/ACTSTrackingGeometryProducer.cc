@@ -46,6 +46,7 @@
 #include "Acts/Detector/KdtSurfacesProvider.hpp"
 #include "Acts/Geometry/Polyhedron.hpp"
 #include "Acts/Geometry/GeometryContext.hpp"
+#include "Acts/Geometry/TrackingGeometryVisitor.hpp"
 #include "Acts/Surfaces/PlaneSurface.hpp"
 #include "Acts/Surfaces/RectangleBounds.hpp"
 #include "Acts/Surfaces/TrapezoidBounds.hpp"
@@ -243,17 +244,6 @@ private:
     std::size_t m_batchSize = 0;
 
     std::unordered_map<std::size_t, Acts::RecordedMaterialTrack> mtrackCollection;
-};
-
-struct MaterialSurfaceSelector {
-  std::vector<const Acts::Surface*> surfaces = {};
-
-  /// @param surface is the test surface
-  void operator()(const Acts::Surface* surface) {
-    if (surface->surfaceMaterial() != nullptr && !rangeContainsValue(surfaces, surface)) {
-      surfaces.push_back(surface);
-    }
-  }
 };
 
 struct myContext{
@@ -480,15 +470,26 @@ void AddExtraLayer(std::string gapName,
 
 };
 
-struct myMutableVisitor : public Acts::TrackingGeometryMutableVisitor {
-    std::vector<Acts::Surface*> SurfVec;
-    void visitSurface(Acts::Surface& surface) {
-      if(surface.surfaceMaterial() != nullptr){
-        SurfVec.push_back(&surface);
-    
-      }
+struct MatSurfaceSelector : public Acts::TrackingGeometryMutableVisitor {
+  std::vector<Acts::Surface*> surfaces;
+  void visitSurface(Acts::Surface& surface) override {
+    if(surface.surfaceMaterial() != nullptr && !rangeContainsValue(surfaces, &surface)) {
+        surfaces.push_back(&surface);
     }
+  }
 };
+
+// struct MaterialSurfaceSelector {
+//     std::vector<const Acts::Surface*> surfaces = {};
+
+//     /// @param surface is the test surface
+//     void operator()(const Acts::Surface* surface) {
+//       if (surface->surfaceMaterial() != nullptr && !rangeContainsValue(surfaces, surface)) {
+//         // surfaces.push_back(surface);
+//         surfaces.push_back(const_cast<Acts::Surface*>(surface));
+//       }
+//     }
+// };
 
 template <typename MakeLayerFn>
 void AddDiskLayer_and_Material(Acts::Experimental::CylinderContainerBlueprintNode* cont,
@@ -1500,9 +1501,9 @@ std::shared_ptr<TrackingGeometryWithDetEls> ACTSTrackingGeometryProducer::produc
     Acts::MaterialMapJsonConverter::Config dec_cfg;
     Acts::JsonMaterialDecorator jsonMatDec(dec_cfg, materialFile_, Acts::Logging::Level::INFO);
 
-    myMutableVisitor myVis;
-    trackingGeometry->apply(myVis);
-    std::vector<Acts::Surface*> surfVec = myVis.SurfVec;
+    MatSurfaceSelector sel;
+    trackingGeometry->apply(sel);
+    std::vector<Acts::Surface*> surfVec = sel.surfaces;
 
     // Loop over the surfaces and decorate them:
     for(auto& surf : surfVec){

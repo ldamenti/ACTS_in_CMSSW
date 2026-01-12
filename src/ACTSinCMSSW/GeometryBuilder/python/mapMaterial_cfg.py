@@ -92,7 +92,7 @@ process.trackinGeoProducer = cms.ESProducer("ACTSTrackingGeometryProducer",
     outputSvgFile  = cms.untracked.string("testSvg_output.svg"),
     # Option to map the material from a JSON file
     mapMaterial    = cms.untracked.bool(True),
-    MaterialMaps   = cms.untracked.string("MaterialMaps_WithExtraLayers.json")
+    MaterialMaps   = cms.untracked.string("MaterialMaps_MatStudy.json")
 )
 
 process.get = cms.EDAnalyzer("EventSetupRecordDataGetter",
@@ -105,7 +105,7 @@ process.get = cms.EDAnalyzer("EventSetupRecordDataGetter",
 # ===== Create the Material Maps =====
 process.createMaterialFile = cms.EDProducer("JsonMaterialMapsProducer",
     G4InputFile = cms.untracked.string("/eos/user/l/ldamenti/G4MaterialFiles/MaterialFile_ExtendedGeo2023_10000_100_test_TrkOnly.root"),
-    OutputFile  = cms.untracked.string("MaterialMaps_WithExtraLayers.json"),
+    OutputFile  = cms.untracked.string("MaterialMaps_MatStudy.json"),
     Nevents = cms.untracked.int32(10000),
 )
 

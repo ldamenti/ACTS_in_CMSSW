@@ -1,0 +1,1 @@
+AlignmentOfflinevalidationPlugins_PACKAGE := self/src/Alignment/OfflineValidation/plugins

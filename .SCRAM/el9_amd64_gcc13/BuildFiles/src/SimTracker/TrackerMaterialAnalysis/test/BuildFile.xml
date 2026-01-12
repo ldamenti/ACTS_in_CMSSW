@@ -1,0 +1,10 @@
+{
+  "BUILDPRODUCTS": {
+    "BIN": {
+      "trackerMaterialAnalysisPlots": {
+        "COMMAND": "genTrackerPlots.sh",
+        "TYPE": "test"
+      }
+    }
+  }
+}

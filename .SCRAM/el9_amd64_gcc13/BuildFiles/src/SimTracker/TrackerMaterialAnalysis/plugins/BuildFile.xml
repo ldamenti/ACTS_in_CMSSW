@@ -1,0 +1,60 @@
+{
+  "BUILDPRODUCTS": {
+    "LIBRARY": {
+      "DD4hep_SimTrackerMaterialAnalysisPlugins": {
+        "FILES": "dd4hep/*.cc",
+        "FLAGS": {
+          "EDM_PLUGIN": [
+            "1"
+          ]
+        },
+        "LIB": [
+          "Geom"
+        ],
+        "TYPE": "lib",
+        "USE": [
+          "DataFormats/DetId",
+          "DataFormats/GeometryVector",
+          "FWCore/Framework",
+          "FWCore/ParameterSet",
+          "FWCore/PluginManager",
+          "Geometry/CommonDetUnit",
+          "Geometry/Records",
+          "Geometry/TrackerGeometryBuilder",
+          "SimDataFormats/ValidationFormats",
+          "SimG4Core/Watcher",
+          "boost",
+          "geant4core",
+          "rootgpad",
+          "DetectorDescription/DDCMS",
+          "dd4hep"
+        ]
+      },
+      "SimTrackerTrackerMaterialAnalysisPlugins": {
+        "FILES": "*.cc",
+        "FLAGS": {
+          "EDM_PLUGIN": [
+            "1"
+          ]
+        },
+        "TYPE": "lib",
+        "USE": [
+          "DataFormats/DetId",
+          "DataFormats/GeometryVector",
+          "DetectorDescription/Core",
+          "FWCore/Framework",
+          "FWCore/ParameterSet",
+          "FWCore/PluginManager",
+          "Geometry/CommonDetUnit",
+          "Geometry/Records",
+          "Geometry/TrackerGeometryBuilder",
+          "SimDataFormats/ValidationFormats",
+          "SimG4Core/Watcher",
+          "boost",
+          "geant4core",
+          "rootgpad"
+        ]
+      }
+    }
+  }
+}

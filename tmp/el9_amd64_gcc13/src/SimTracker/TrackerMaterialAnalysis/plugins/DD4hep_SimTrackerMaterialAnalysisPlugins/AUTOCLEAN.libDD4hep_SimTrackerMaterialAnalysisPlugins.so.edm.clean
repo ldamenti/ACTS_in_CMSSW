@@ -1,0 +1,2 @@
+01:/usr/bin/rm -f lib/el9_amd64_gcc13/pluginDD4hep_SimTrackerMaterialAnalysisPlugins.so lib/el9_amd64_gcc13/DD4hep_SimTrackerMaterialAnalysisPlugins.edmplugin
+90:edmPluginRefresh lib/el9_amd64_gcc13

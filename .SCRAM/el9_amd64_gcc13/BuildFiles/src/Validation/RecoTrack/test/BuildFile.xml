@@ -1,0 +1,14 @@
+{
+  "BUILDPRODUCTS": {
+    "BIN": {
+      "testMakeTrackValidationPlots": {
+        "COMMAND": "test_makeTrackValidationPlots.sh",
+        "TYPE": "test"
+      },
+      "testSimpleTrackValidation": {
+        "COMMAND": "test_SimpleTrackValidation.sh",
+        "TYPE": "test"
+      }
+    }
+  }
+}

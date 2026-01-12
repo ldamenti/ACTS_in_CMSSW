@@ -1,0 +1,1 @@
+testTkHistoMap DQM/SiStripCommon/test/plugins/testTkHistoMap.cc

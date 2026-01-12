@@ -1,0 +1,46 @@
+{
+  "EXPORT": {
+    "LIB": [
+      "1"
+    ]
+  },
+  "FLAGS": {
+    "USE_SOURCE_ONLY": [
+      "Geometry/CommonDetUnit"
+    ]
+  },
+  "LIB": [
+    "MultiProc"
+  ],
+  "NAME": "AlignmentOfflineValidation",
+  "USE": [
+    "DataFormats/TrackReco",
+    "FWCore/Framework",
+    "FWCore/Utilities",
+    "FWCore/ParameterSet",
+    "Geometry/TrackerGeometryBuilder",
+    "TrackingTools/PatternTools",
+    "TrackingTools/TrackFitters",
+    "MagneticField/Engine",
+    "Alignment/TrackerAlignment",
+    "CondFormats/Alignment",
+    "DataFormats/GeometryCommonDetAlgo",
+    "DataFormats/GeometrySurface",
+    "DataFormats/Math",
+    "DataFormats/SiPixelDetId",
+    "DataFormats/SiStripDetId",
+    "DataFormats/TrackerRecHit2D",
+    "FWCore/MessageLogger",
+    "Geometry/CommonTopologies",
+    "Geometry/Records",
+    "MagneticField/Records",
+    "TrackingTools/GeomPropagators",
+    "TrackingTools/TrajectoryState",
+    "TrackingTools/TransientTrackingRecHit",
+    "clhep",
+    "rootmath",
+    "roothistmatrix",
+    "rootgraphics",
+    "roofit"
+  ]
+}

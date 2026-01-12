@@ -12,8 +12,8 @@ process = cms.Process('HLT',Run3_2023)
 #########################################
 # SET DIGITIZER PARAMETERS              #
 globalPath = '/eos/user/l/ldamenti/DatasetFarm_files/'
-filename_input = 'step1_Np1k_E100GeV_muNeg_BarrOnly.root'
-filename_output = 'step2_Np1k_E100GeV_muNeg_BarrOnly.root'
+filename_input = 'step1_Np1k_E5GeV_muNeg.root'
+filename_output = 'step2_Np1k_E5GeV_muNeg.root'
 #########################################
 
 

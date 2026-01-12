@@ -14,7 +14,10 @@ if __name__ == '__main__':
     # Percorso del file ROOT
     file_path = '/eos/user/l/ldamenti/DQMfiles/'
 
-    filename = 'DQMfile_Np10k_E10GeV_muNeg.root'
+    # filename = 'DQMfile_Np10k_E10GeV_muNeg_MatFixed.root'
+    # filename = 'DQMfile_Np10k_E10GeV_muNeg_MatFixed_EConly.root'
+    # filename = 'DQMfile_effTest_Np1k_E5GeV_muNeg.root'
+    filename = 'DQMfile_JacobianTest_onlyEC.root'
 
     # Percorso dentro il ROOT file fino ai due istogrammi
     histACTS_path = 'DQMData/Run 1/Tracking/Run summary/ACTSmultiTrackValidatortracksACTSRefit_recoCollACTS_ACTSptAssociation/'
@@ -73,7 +76,7 @@ if __name__ == '__main__':
         ax.legend()
         mh.cms.label("Preliminary", data = False, lumi=None, com='0.1', loc = 0)    
         ax.set_xlim(hist_range[0], hist_range[1])
-        parameter = hist_name.replace('pippo','')
+        parameter = hist_name
         if hist_name == 'chi2mean':
             ax.set_xlabel(f'$\eta$')        
             ax.set_ylabel(f'mean $\chi^2$')

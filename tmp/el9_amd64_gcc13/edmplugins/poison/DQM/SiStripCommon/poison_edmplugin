@@ -1,0 +1,4 @@
+plugin-poisoned-testSiStripHistId.so testSiStripHistId CMS%EDM%Framework%Module
+plugin-poisoned-testSiStripHistId.so testSiStripHistId CMS%EDM%Framework%ParameterSet%Description
+plugin-poisoned-testTkHistoMap.so testTkHistoMap CMS%EDM%Framework%Module
+plugin-poisoned-testTkHistoMap.so testTkHistoMap CMS%EDM%Framework%ParameterSet%Description

@@ -1,0 +1,2 @@
+ALL_PACKAGES += ACTSinCMSSW/GeometryDataFormat
+subdirs_src_ACTSinCMSSW_GeometryDataFormat := src_ACTSinCMSSW_GeometryDataFormat_src

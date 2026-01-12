@@ -47,9 +47,10 @@ if __name__ == '__main__':
     # filename = 'DQMfile_1kmuNeg_10GeVNew.root'
     # filename = 'DQMfile_500muNeg_10GeV.root'
     # filename = 'DQMfile_500muNeg_10GeV_withJ.root'
-    filename = 'DQMfile_Np10k_E10GeV_muNeg.root'
-    # filename = 'DQMfile_500muNeg_10GeV_noJ.root'
-    # filename = 'DQMfile_test.root'
+    # filename = 'DQMfile_Np10k_E10GeV_muNeg_MatFixed.root'
+    # filename = 'DQMfile_Np10k_E10GeV_muNeg_MatFixed_EConly.root'
+    # filename = 'DQMfile_effTest_Np1k_E5GeV_muNeg.root'
+    filename = 'DQMfile_JacobianTest_onlyEC.root'
 
     # Percorso dentro il ROOT file fino ai due istogrammi
     histACTS_path = 'DQMData/Run 1/Tracking/Run summary/ACTSmultiTrackValidatortracksACTSRefit_recoCollACTS_ACTSptAssociation/'
@@ -104,31 +105,31 @@ if __name__ == '__main__':
                                                                     n_bins = 100)
 
         fig, ax = plt.subplots()
-        # mh.histplot(counts_acts, bins_acts, 
-        #             label=r'$\bf{ACTS}$' + f'\n$\mu$={mu_pull_acts:.2e}\n$\sigma$={sigma_pull_acts:.2e}', 
-        #             ax=ax, histtype='bar', 
-        #             facecolor=(0.4, 0.6, 1.0, 0.3), 
-        #             edgecolor=(0.4, 0.6, 1.0, 1), 
-        #             linewidth=2)
-        # mh.histplot(counts_cmssw, bins_cmssw, 
-        #             label=r'$\bf{CMSSW}$' + f'\n$\mu$={mu_pull_cmssw:.2e}\n$\sigma$={sigma_pull_cmssw:.2e}', 
-        #             ax=ax, histtype='bar', 
-        #             facecolor=(1, 0.5, 0, 0.3), 
-        #             edgecolor=(1, 0.5, 0, 1),
-        #             linewidth=2)
-        
         mh.histplot(counts_acts, bins_acts, 
-                    label=r'$\bf{ACTS}$' + f'\n$\mu$={mean_acts:.2e}\n$\sigma$={std_acts:.2e}', 
+                    label=r'$\bf{ACTS}$' + f'\n$\mu$={mu_pull_acts:.2e}\n$\sigma$={sigma_pull_acts:.2e}', 
                     ax=ax, histtype='bar', 
                     facecolor=(0.4, 0.6, 1.0, 0.3), 
                     edgecolor=(0.4, 0.6, 1.0, 1), 
                     linewidth=2)
         mh.histplot(counts_cmssw, bins_cmssw, 
-                    label=r'$\bf{CMSSW}$' + f'\n$\mu$={mean_cmssw:.2e}\n$\sigma$={std_cmssw:.2e}', 
+                    label=r'$\bf{CMSSW}$' + f'\n$\mu$={mu_pull_cmssw:.2e}\n$\sigma$={sigma_pull_cmssw:.2e}', 
                     ax=ax, histtype='bar', 
                     facecolor=(1, 0.5, 0, 0.3), 
                     edgecolor=(1, 0.5, 0, 1),
                     linewidth=2)
+        
+        # mh.histplot(counts_acts, bins_acts, 
+        #             label=r'$\bf{ACTS}$' + f'\n$\mu$={mean_acts:.2e}\n$\sigma$={std_acts:.2e}', 
+        #             ax=ax, histtype='bar', 
+        #             facecolor=(0.4, 0.6, 1.0, 0.3), 
+        #             edgecolor=(0.4, 0.6, 1.0, 1), 
+        #             linewidth=2)
+        # mh.histplot(counts_cmssw, bins_cmssw, 
+        #             label=r'$\bf{CMSSW}$' + f'\n$\mu$={mean_cmssw:.2e}\n$\sigma$={std_cmssw:.2e}', 
+        #             ax=ax, histtype='bar', 
+        #             facecolor=(1, 0.5, 0, 0.3), 
+        #             edgecolor=(1, 0.5, 0, 1),
+        #             linewidth=2)
         
         ax.plot(x_acts, y_acts, color=(0.4, 0.6, 1.0, 1), linestyle='-', linewidth=2)
         ax.plot(x_cmssw, y_cmssw, color=(1, 0.5, 0, 1), linestyle='-', linewidth=2)

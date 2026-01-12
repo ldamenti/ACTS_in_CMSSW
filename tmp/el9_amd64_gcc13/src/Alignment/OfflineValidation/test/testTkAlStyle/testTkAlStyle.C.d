@@ -1,0 +1,3 @@
+tmp/el9_amd64_gcc13/src/Alignment/OfflineValidation/test/testTkAlStyle/testTkAlStyle.C.o: \
+ src/Alignment/OfflineValidation/test/testTkAlStyle.C \
+ src/Alignment/OfflineValidation/test/../interface/TkAlStyle.h

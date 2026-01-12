@@ -1,0 +1,14 @@
+{
+  "EXPORT": {
+    "LIB": [
+      "1"
+    ]
+  },
+  "NAME": "GeometryRecords",
+  "USE": [
+    "FWCore/Utilities",
+    "FWCore/Framework",
+    "CondFormats/AlignmentRecord",
+    "boost"
+  ]
+}

@@ -1,0 +1,201 @@
+{
+  "BUILDPRODUCTS": {
+    "BIN": {
+      "DMRall": {
+        "COMMAND": "testingScripts/test_unitDMR.sh",
+        "FLAGS": {
+          "PRE_TEST": [
+            "validateAlignments"
+          ]
+        },
+        "TYPE": "test"
+      },
+      "DiElectronVertex": {
+        "COMMAND": "testingScripts/test_unitDiElectronVertex.sh",
+        "TYPE": "test"
+      },
+      "DiMuonVall": {
+        "COMMAND": "testingScripts/test_unitDiMuonV.sh",
+        "FLAGS": {
+          "PRE_TEST": [
+            "validateAlignments"
+          ]
+        },
+        "TYPE": "test"
+      },
+      "DiMuonVertex": {
+        "COMMAND": "testingScripts/test_unitDiMuonVertex.sh",
+        "TYPE": "test"
+      },
+      "EoP": {
+        "COMMAND": "testingScripts/test_unitEoP.sh",
+        "TYPE": "test"
+      },
+      "GCPall": {
+        "COMMAND": "testingScripts/test_unitGCP.sh",
+        "FLAGS": {
+          "PRE_TEST": [
+            "validateAlignments"
+          ]
+        },
+        "TYPE": "test"
+      },
+      "Genericall": {
+        "COMMAND": "testingScripts/test_unitGeneric.sh",
+        "FLAGS": {
+          "PRE_TEST": [
+            "validateAlignments"
+          ]
+        },
+        "TYPE": "test"
+      },
+      "JetHTall": {
+        "COMMAND": "testingScripts/test_unitJetHT.sh",
+        "FLAGS": {
+          "PRE_TEST": [
+            "validateAlignments"
+          ]
+        },
+        "TYPE": "test"
+      },
+      "MTSall": {
+        "COMMAND": "testingScripts/test_unitMTS.sh",
+        "FLAGS": {
+          "PRE_TEST": [
+            "validateAlignments"
+          ]
+        },
+        "TYPE": "test"
+      },
+      "Miscellanea": {
+        "COMMAND": "testingScripts/test_unitMiscellanea.sh",
+        "TYPE": "test"
+      },
+      "PVValidation": {
+        "COMMAND": "testingScripts/test_unitPVValidation.sh",
+        "TYPE": "test"
+      },
+      "PVall": {
+        "COMMAND": "testingScripts/test_unitPV.sh",
+        "FLAGS": {
+          "PRE_TEST": [
+            "validateAlignments"
+          ]
+        },
+        "TYPE": "test"
+      },
+      "PixBaryall": {
+        "COMMAND": "testingScripts/test_unitPixBary.sh",
+        "FLAGS": {
+          "PRE_TEST": [
+            "validateAlignments"
+          ]
+        },
+        "TYPE": "test"
+      },
+      "PrimaryVertex": {
+        "COMMAND": "testingScripts/test_unitPrimaryVertex.sh",
+        "TYPE": "test"
+      },
+      "SagittaBiasNtuplizer": {
+        "COMMAND": "testingScripts/test_unitSagittaBiasNtuplizer.sh",
+        "TYPE": "test"
+      },
+      "ShortTrackValidation": {
+        "COMMAND": "testingScripts/test_unitShortTrackValidation.sh",
+        "TYPE": "test"
+      },
+      "SplitVall": {
+        "COMMAND": "testingScripts/test_unitSplitV.sh",
+        "FLAGS": {
+          "PRE_TEST": [
+            "validateAlignments"
+          ]
+        },
+        "TYPE": "test"
+      },
+      "SubmitPVrbr": {
+        "COMMAND": "testingScripts/test_unitSubmitPVrbr.sh",
+        "TYPE": "test"
+      },
+      "SubmitPVsplit": {
+        "COMMAND": "testingScripts/test_unitSubmitPVsplit.sh",
+        "TYPE": "test"
+      },
+      "Zmumuall": {
+        "COMMAND": "testingScripts/test_unitZmumu.sh",
+        "FLAGS": {
+          "PRE_TEST": [
+            "validateAlignments"
+          ]
+        },
+        "TYPE": "test"
+      },
+      "testDiMuonBiasesPlotting": {
+        "FILES": "testanalyzeDiMuonBiases.cpp",
+        "FLAGS": {
+          "PRE_TEST": [
+            "SagittaBiasNtuplizer"
+          ]
+        },
+        "TYPE": "bin",
+        "USE": [
+          "rootmath",
+          "roothistmatrix",
+          "rootgraphics",
+          "Alignment/OfflineValidation"
+        ]
+      },
+      "testEoPPlotting": {
+        "FILES": "testEoPPlotting.cpp",
+        "FLAGS": {
+          "PRE_TEST": [
+            "EoP"
+          ]
+        },
+        "TYPE": "bin",
+        "USE": [
+          "rootmath",
+          "roothistmatrix",
+          "rootgraphics",
+          "Alignment/OfflineValidation"
+        ]
+      },
+      "testPVPlotting": {
+        "FILES": "testPVPlotting.cpp",
+        "FLAGS": {
+          "PRE_TEST": [
+            "PrimaryVertex"
+          ]
+        },
+        "TYPE": "bin",
+        "USE": [
+          "rootmath",
+          "roothistmatrix",
+          "rootgraphics",
+          "Alignment/OfflineValidation"
+        ]
+      },
+      "testTkAlStyle": {
+        "FILES": "testTkAlStyle.C",
+        "TYPE": "bin",
+        "USE": [
+          "rootgraphics",
+          "Alignment/OfflineValidation"
+        ]
+      },
+      "testTrackAnalysis": {
+        "FILES": "testTrackAnalyzers.cc",
+        "TYPE": "bin",
+        "USE": [
+          "FWCore/TestProcessor",
+          "catch2"
+        ]
+      },
+      "validateAlignments": {
+        "COMMAND": "testingScripts/validateAlignments.sh",
+        "TYPE": "test"
+      }
+    }
+  }
+}
